@@ -40,30 +40,19 @@
 ;;                      <for-exp (id exp1 exp2 exp3)>
 ;;                  ::= <primitiva> ({<expresion>}*(,))
 ;;                      <prim-exp (lexp)>
-;;                  ::= <prim-hex> ({<expresion>}*(,))
-;;                      <primhex-exp (lexp)>
-;;                  ::= <primitiva-cad> ({<expresion>}*(,))
-;;                      <primcad-exp (lexp)>
-;;                  ::= <primitiva-list> ({<expresion>}*(,))
-;;                      <primls-exp (lexp)>
-;;                  ::= <primitica-vect> ({<expresion>}*(,))
-;;                      <primvec-exp (lexp)>
-;;                  ::= <primitica-reg> ({<expresion>}*(,))
-;;                      <primreg-exp (lexp)>
 ;;                  ::= proc({<identificador>}*(,)) <expresion>
 ;;                      <proc-exp (ids body)>
 ;;                  ::= letrec  {<identificador> ({<identificador>}*(,)) = <expresion>}* in <expresion>
 ;;                      <letrec-exp proc-names idss bodies bodyletrec>
-;;                  ::= imprimir ({<expresion>})
+;;                  ::= imprimir (<expresion>)
 ;;                      <print-exp>
 ;;                  ::= FNC <numero> (<clausula-or>)+("and")
 ;;<clausula-or>     ::= (<numero>)+("or")
 ;;<primitiva>       ::= + | - | * | % | / | add1 | sub1
-;;<primitiva-hex>   ::= + | - | * | add1 | sub1
-;;<primitiva-cad>   ::= lenght | concat
-;;<primitiva-list>  ::= vacia | crear-lista | lista? | cabeza | cola | append
-;;<primitica-vect>  ::= vector? | crear-vec | ref-vec | set-vec
-;;<primitica-reg>   ::= registros? | crear-reg | ref-reg | set-reg
+;;                  ::= lenght | concat
+;;                  ::= vacia | crear-lista | lista? | cabeza | cola | append
+;;                  ::= vector? | crear-vec | ref-vec | set-vec
+;;                  ::= registros? | crear-reg | ref-reg | set-reg
 ;;<lista>           ::= [{<expresion>}*(;)]
 ;;                      <lista (lexps)>
 ;;<vector>          ::= vector[{<expresion>}*(;)]
@@ -81,6 +70,8 @@
 ;;<pred-prim>       ::= <|>|<=|>=|==|<>
 ;;<oper-bin-bool>   ::= and|or
 ;;<oper-un-bool>    ::= not
+;;<bool>            ::= true
+;;                  ::= false
 
 (define lexico
   '(
@@ -111,10 +102,24 @@
     (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
                 rec-exp)
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
-    (expresion ("for" identificador "=" expresion to-o-downto expresion "do" expresion "done") for-exp)
+    (expresion ("for" identificador "=" expresion to-o-downto expresion "do" expresion "done") for-exp)    
+    (expresion (primitiva "(" (separated-list expresion ",") ")") prim-exp)
+    (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
+    (expresion ("letrec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
+                letrec-exp)
+    (expresion ("imprimir" "(" expresion ")") print-exp)
+    (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
+    (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion)
+    (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") union-comp)
+    (expr-bool (bool) bool-exp)
+    (expr-bool (oper-un-bool "(" expr-bool ")") op-comp)
+    
+  
+    (clausula-or (numero (arbno "or" numero)) clausula-or-exp)
     (to-o-downto ("to") to)
     (to-o-downto ("downto") downto)
-    (expresion (primitiva "(" (separated-list expresion ",") ")") prim-exp)    
+    (bool ("true") true-exp)
+    (bool ("false") true-exp)
     (primitiva ("+") suma)
     (primitiva ("-") resta)
     (primitiva ("*") multiplicacion)
@@ -122,8 +127,33 @@
     (primitiva ("%") modulo)
     (primitiva ("add1") add1)
     (primitiva ("sub1") sub1)
-    ;;              ::= <bool>
-;;                  ::= <bool-exp (bool)>;;                  
+    (primitiva ("lenght") lenght-exp)
+    (primitiva ("concat") concat-exp)
+    (primitiva ("vacia") vacia-exp)
+    (primitiva ("crear-lista") crear-lista-exp)
+    (primitiva ("lista?") lista?-exp)
+    (primitiva ("cabeza") cabeza-exp)
+    (primitiva ("cola") cola-exp)
+    (primitiva ("append") append-exp)
+    (primitiva ("vector?") vector?-exp)
+    (primitiva ("crear-vec") crear-v-exp)
+    (primitiva ("ref-vec") ref-vec-exp)
+    (primitiva ("set-vec") set-vec-exp)
+    (primitiva ("registros?")registros?-exp)
+    (primitiva ("crear-reg") crear-reg-exp)
+    (primitiva ("ref-reg") ref-reg-exp)
+    (primitiva ("set-reg") set-reg-exp)
+    (pred-prim ("<") menor-exp)
+    (pred-prim (">") mayor-exp)
+    (pred-prim ("<=") menor=exp)
+    (pred-prim (">=") mayor=exp)
+    (pred-prim ("==") igual=exp)
+    (pred-prim ("<>") diferente=exp)
+    (oper-bin-bool ("and") and-exp)
+    (oper-bin-bool ("or") and-exp)
+    (oper-un-bool ("not") not-exp)    
+    
+         
 ;;                  
 ;;                  ::= <lista>
 ;;                      <lista-exp (lista)>
@@ -137,53 +167,22 @@
 ;;                      <if-exp (expb exp1 exp2)>
 ;;                  ::= while <expr-bool> do <expresion> done
 ;;                      <while-exp (expb exp)>
-;;                  ::= <prim-hex> ({<expresion>}*(,))
-;;                      <primhex-exp (lexp)>
-;;                  ::= <primitiva-cad> ({<expresion>}*(,))
-;;                      <primcad-exp (lexp)>
-;;                  ::= <primitiva-list> ({<expresion>}*(,))
-;;                      <primls-exp (lexp)>
-;;                  ::= <primitica-vect> ({<expresion>}*(,))
-;;                      <primvec-exp (lexp)>
-;;                  ::= <primitica-reg> ({<expresion>}*(,))
-;;                      <primreg-exp (lexp)>
-;;                  ::= proc({<identificador>}*(,)) <expresion>
-;;                      <proc-exp (ids body)>
-;;                  ::= letrec  {<identificador> ({<identificador>}*(,)) = <expresion>}* in <expresion>
-;;                      <letrec-exp proc-names idss bodies bodyletrec>
-;;                  ::= imprimir ({<expresion>})
-;;                      <print-exp>
-;;                  ::= FNC <numero> (<clausula-or>)+("and")
-;;<clausula-or>     ::= (<numero>)+("or")
 
-;;<primitiva-hex>   ::= + | - | * | add1 | sub1
-;;<primitiva-cad>   ::= lenght | concat
-;;<primitiva-list>  ::= vacia | crear-lista | lista? | cabeza | cola | append
-;;<primitica-vect>  ::= vector? | crear-vec | ref-vec | set-vec
-;;<primitica-reg>   ::= registros? | crear-reg | ref-reg | set-reg
+
 ;;<lista>           ::= [{<expresion>}*(;)]
 ;;                      <lista (lexps)>
 ;;<vector>          ::= vector[{<expresion>}*(;)]
 ;;                      <vector (lexps)>
 ;;<registro>        ::= {{<identificador> = <expresion>}+(;)}
 ;;                      <registro (lids lexps)>
-;;<expr-bool>       ::= <pred-prim> (<expresion> , <expresion>)
-;;                      <name (pprim exp1 exp2)>
-;;                  ::= <oper-bin-bool> (<expr-bool> , <expr-bool>)
-;;                      <name (obbool expb expb)>
-;;                  ::= <bool>
-;;                      <name (bool)>
-;;                  ::= <oper-un-bool> (<expr-bool>)
-;;                      <name (oubool expb)>
-;;<pred-prim>       ::= <|>|<=|>=|==|<>
-;;<oper-bin-bool>   ::= and|or
-;;<oper-un-bool>    ::= not
+
+
     )
   )
 
 
 (sllgen:make-define-datatypes lexico gramatica)
-
+;(sllgen:list-define-datatypes lexico gramatica)
 
 
 
