@@ -60,13 +60,13 @@
 ;;<registro>        ::= {{<identificador> = <expresion>}+(;)}
 ;;                      <registro (lids lexps)>
 ;;<expr-bool>       ::= <pred-prim> (<expresion> , <expresion>)
-;;                      <name (pprim exp1 exp2)>
+;;                      <comparacion (pprim exp1 exp2)>
 ;;                  ::= <oper-bin-bool> (<expr-bool> , <expr-bool>)
-;;                      <name (obbool expb expb)>
+;;                      <union (obbool expb expb)>
 ;;                  ::= <bool>
-;;                      <name (bool)>
+;;                      <bool-exp (bool)>
 ;;                  ::= <oper-un-bool> (<expr-bool>)
-;;                      <name (oubool expb)>
+;;                      <op-comp (oubool expb)>
 ;;<pred-prim>       ::= <|>|<=|>=|==|<>
 ;;<oper-bin-bool>   ::= and|or
 ;;<oper-un-bool>    ::= not
@@ -98,7 +98,7 @@
     (expresion ("$" identificador) refid-exp)
     (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
     (expresion (identificador "->" expresion) asignar-exp)
-    (expresion ("cons" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
+    (expresion ("cons" (separated-list identificador "=" expresion ",") "in" expresion)  cons-exp)
     (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
                 rec-exp)
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
@@ -119,7 +119,7 @@
     (to-o-downto ("to") to)
     (to-o-downto ("downto") downto)
     (bool ("true") true-exp)
-    (bool ("false") true-exp)
+    (bool ("false") false-exp)
     (primitiva ("+") suma)
     (primitiva ("-") resta)
     (primitiva ("*") multiplicacion)
@@ -148,9 +148,9 @@
     (pred-prim ("<=") menor=exp)
     (pred-prim (">=") mayor=exp)
     (pred-prim ("==") igual=exp)
-    (pred-prim ("<>") diferente=exp)
+    (pred-prim ("<>") diferente-exp)
     (oper-bin-bool ("and") and-exp)
-    (oper-bin-bool ("or") and-exp)
+    (oper-bin-bool ("or") or-exp)
     (oper-un-bool ("not") not-exp)    
     
          
