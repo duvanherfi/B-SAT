@@ -95,30 +95,32 @@
     (expresion ("x16" "(" (arbno numero) ")") numerohex-exp)
     (expresion ("'" identificador "'") caracter-exp)
     (expresion ("\"" identificador "\"") cadena-exp)
+    (expresion (expr-bool) bool-exp)
     (expresion (identificador) identificador-exp)
     (expresion ("$" identificador) refid-exp)
-    (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
+    (expresion ("var" identificador "=" expresion (arbno "," identificador "=" expresion) "in" expresion)  var-exp)
     (expresion ("set" identificador "->" expresion) asignar-exp)
-    (expresion ("cons" (separated-list identificador "=" expresion ",") "in" expresion)  cons-exp)
+    (expresion ("cons" identificador "=" expresion (arbno "," identificador "=" expresion) "in" expresion)  cons-exp)
     (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
                 rec-exp)
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
     (expresion ("for" identificador "=" expresion to-o-downto expresion "do" expresion "done") for-exp)    
     (expresion (primitiva "(" (separated-list expresion ",") ")") prim-exp)
-    (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
-    (expresion ("letrec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
-                letrec-exp)
+    (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)    
     (expresion ("imprimir" "(" expresion ")") print-exp)
     (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
     (expresion ("if" expr-bool "then" expresion "[" "else" expresion "]" "end") if-exp)
-    (expresion ("while") while-exp)
+    (expresion ("while" expr-bool "do" expresion "done") while-exp)
+    (expresion (lista) lista-exp)
+    (expresion (vector) vector-exp)
+    (espresion (registro) registro-exp)
+    (lista ("[" (separated-list expresion ",") "]") lista1)
+    (vector ("vector" "[" (separated-list expresion ",") "]") vector1)
+    (registro ("{" identificador "=" expresion (arbno ";" identificador "=" expresion)"}") registro1)
     (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion)
     (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") union-comp)
-    (expr-bool (bool) bool-exp)
-    (expr-bool (oper-un-bool "(" expr-bool ")") op-comp)
-    
-;;                  ::= while <expr-bool> do <expresion> done
-;;                      <while-exp (expb exp)>
+    (expr-bool (bool) vlr-bool)
+    (expr-bool (oper-un-bool "(" expr-bool ")") op-comp) 
     (clausula-or (numero (arbno "or" numero)) clausula-or-exp)
     (to-o-downto ("to") to)
     (to-o-downto ("downto") downto)
@@ -164,24 +166,10 @@
     (oper-un-bool ("not") not-exp)    
     
          
-;;                  
-;;                  ::= <lista>
-;;                      <lista-exp (lista)>
-;;                  ::= <vector>
-;;                      <vector-exp (vector)>
-;;                  ::= <registro>
-;;                      <registro-exp (registro)>
-;;                  ::= <exp-bool>
-;;                  ::= <bool-exp (exp-bool)>
 
 
 
-;;<lista>           ::= [{<expresion>}*(;)]
-;;                      <lista (lexps)>
-;;<vector>          ::= vector[{<expresion>}*(;)]
-;;                      <vector (lexps)>
-;;<registro>        ::= {{<identificador> = <expresion>}+(;)}
-;;                      <registro (lids lexps)>
+
 
 
     )
