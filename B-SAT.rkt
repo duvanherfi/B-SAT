@@ -124,7 +124,7 @@
     (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") union-comp)
     (expr-bool (bool) vlr-bool)
     (expr-bool (oper-un-bool "(" expr-bool ")") op-comp) 
-    (clausula-or (numero (arbno "or" numero)) clausula-or-exp)
+    (clausula-or ("(" numero (arbno "or" numero) ")" ) clausula-or-exp)
     (to-o-downto ("to") to)
     (to-o-downto ("downto") downto)
     (bool ("true") true-exp)
@@ -203,6 +203,53 @@
 ;(scan&parse "for x = 1 to 5 do imprimir(x) done");  for-exp con to
 ;(scan&parse "for x = 5 downto 1 do imprimir(x) done");  for-exp con downto
 
+;(scan&parse "+(2,3)");  
+;(scan&parse "-(2,3)");  
+;(scan&parse "*(2,3)");  
+;(scan&parse "/(2,3)");  
+;(scan&parse "%(2,3)");  
+;(scan&parse "add1(2)");  
+;(scan&parse "sub1(2)");  
+;(scan&parse "+_16(2)");  
+;(scan&parse "-_16(2)");  
+;(scan&parse "*_16(2)");  
+;(scan&parse "add1_16(2)");  
+;(scan&parse "sub1_16(2)");  
+;(scan&parse "lenght(\"cadena\")");  
+;(scan&parse "concat(\"cadena\",\"cadena\")");  
+;(scan&parse "vacia()");  
+;         ;(scan&parse "crear-lista(append 5 [])");  
+;(scan&parse "lista?([x,y])");  
+;(scan&parse "cabeza([x,y])");  
+;(scan&parse "cola([x,y])");  
+;(scan&parse "append([x,y],[v,w])");  
+;(scan&parse "vector?(vector[x,y])");  
+;         ;(scan&parse "crear-vec(append 5 vector[])");  
+;(scan&parse "ref-vec(2,vector[x,y])");  
+;(scan&parse "set-vec(3,vector[x,y],5)");  
+;(scan&parse "registros?({x=8})");  
+;         ;(scan&parse "crear-reg(x=8,{})");  
+;(scan&parse "ref-reg(x,{x=8})");  
+;(scan&parse "set-reg(x,{x=8},9)");  
+;(scan&parse "proc(x) y");  
+;(scan&parse "imprimir(\"Hola\");  ");  
+;(scan&parse "FNC 2 (5 or 6)");  
+;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  
+;(scan&parse "if <(2,3) then 2 [else 3] end");  
+;(scan&parse "if >(2,3) then 2 [else 3] end");  
+;(scan&parse "if <=(2,3) then 2 [else 3] end");  
+;(scan&parse "if >=(2,3) then 2 [else 3] end");  
+;(scan&parse "if ==(2,3) then 2 [else 3] end");  
+;(scan&parse "if <>(2,3) then 2 [else 3] end");  
+;(scan&parse "if and(true,false) then 2 [else 3] end");  
+;(scan&parse "if or(true,false) then 2 [else 3] end");  
+;(scan&parse "if true then 2 [else 3] end");  
+;(scan&parse "if false then 2 [else 3] end");  
+;(scan&parse "if not(true) then 2 [else 3] end");  
+;(scan&parse "while not(true) do 2 done");  
+;(scan&parse "[4,5]");  
+;(scan&parse "vector[4,5]");  
+;(scan&parse "{x=2;y=5}");  
 
 ;(interpretador)
 
