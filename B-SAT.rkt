@@ -31,7 +31,7 @@
 ;;                  ::= <registro>
 ;;                      <registro-exp (registro)>
 ;;                  ::= <exp-bool>
-;;                  ::= <bool-exp (exp-bool)>
+;;                      <bool-exp (exp-bool)>
 ;;                  ::= begin {<expresion>}+(;) end
 ;;                      <begin-exp (lexps)>
 ;;                  ::= if <expr-bool> then <expresion> [else <expresion> ] end
@@ -49,6 +49,7 @@
 ;;                  ::= imprimir (<expresion>)
 ;;                      <print-exp>
 ;;                  ::= FNC <numero> (<clausula-or>)+("and")
+;;                      <fnc-exp (numero lc-or)>
 ;;<clausula-or>     ::= (<numero>)+("or")
 ;;<primitiva>       ::= + | - | * | % | / | add1 | sub1 | solveFNC
 ;;                  ::= +_16 | -_16 | *_16 | add1_16 | sub1_16
@@ -67,7 +68,7 @@
 ;;                  ::= <oper-bin-bool> (<expr-bool> , <expr-bool>)
 ;;                      <union (obbool expb expb)>
 ;;                  ::= <bool>
-;;                      <bool-exp (bool)>
+;;                      <vlr-bool (bool)>
 ;;                  ::= <oper-un-bool> (<expr-bool>)
 ;;                      <op-comp (oubool expb)>
 ;;<pred-prim>       ::= <|>|<=|>=|==|<>
