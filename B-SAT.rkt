@@ -11,7 +11,7 @@
 ;;                  ::= <cadena>
 ;;                      <cadena-exp (cadena)>
 ;;                  ::= <bool>
-;;                  ::= <bool-exp (bool)>
+;;                      <bool-exp (bool)>
 ;;                  ::= <identificador>
 ;;                      <identificador-exp (id)>
 ;;                  ::= $<identificador>
@@ -39,11 +39,13 @@
 ;;                  ::= while <expr-bool> do <expresion> done
 ;;                      <while-exp (expb exp)>
 ;;                  ::= for <identificador> = <expresion> (to | downto) <expresion> do <expresion> done
-;;                      <for-exp (id exp1 exp2 exp3)>
+;;                      <for-exp (id exp1 to-odwto exp2 exp3)>
 ;;                  ::= <primitiva> ({<expresion>}*(,))
 ;;                      <prim-exp (lexp)>
 ;;                  ::= proc({<identificador>}*(,)) <expresion>
 ;;                      <proc-exp (ids body)>
+;;                  ::= (<expresion> {expression}*)
+;;                      <app-exp (expresion lexps)>
 ;;                  ::= letrec  {<identificador> ({<identificador>}*(,)) = <expresion>}* in <expresion>
 ;;                      <letrec-exp proc-names idss bodies bodyletrec>
 ;;                  ::= imprimir (<expresion>)
@@ -74,8 +76,7 @@
 ;;<pred-prim>       ::= <|>|<=|>=|==|<>
 ;;<oper-bin-bool>   ::= and|or
 ;;<oper-un-bool>    ::= not
-;;<bool>            ::= true
-;;                  ::= false
+;;<bool>            ::= true | false
 
 (define lexico
   '(
@@ -90,31 +91,32 @@
   )
 
 (define gramatica
-  '(
-    (BSAT (expresion) bsat-program)
+  '(    
+    (BSAT (expresion) bsat-program)    
     (expresion (numero) numero-exp)
-    (expresion ("x16" "(" (arbno numero) ")") numerohex-exp)
+    (expresion ("x_16(" (arbno numero) ")") numerohex-exp)
     (expresion ("'" identificador "'") caracter-exp)
     (expresion ("\"" identificador "\"") cadena-exp)
     (expresion (expr-bool) bool-exp)
     (expresion (identificador) identificador-exp)
     (expresion ("$" identificador) refid-exp)
-    (expresion ("var" identificador "=" expresion (arbno "," identificador "=" expresion) "in" expresion)  var-exp)
+    (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
     (expresion ("set" identificador "->" expresion) asignar-exp)
-    (expresion ("cons" identificador "=" expresion (arbno "," identificador "=" expresion) "in" expresion)  cons-exp)
+    (expresion ("cons" (separated-list identificador "=" expresion ",") "in" expresion)  cons-exp)
     (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
                 rec-exp)
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
     (expresion ("for" identificador "=" expresion to-o-downto expresion "do" expresion "done") for-exp)    
     (expresion (primitiva "(" (separated-list expresion ",") ")") prim-exp)
-    (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)    
+    (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
+    (expresion ("(" expresion (arbno expresion) ")") app-exp)
     (expresion ("imprimir" "(" expresion ")") print-exp)
     (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
     (expresion ("if" expr-bool "then" expresion "[" "else" expresion "]" "end") if-exp)
     (expresion ("while" expr-bool "do" expresion "done") while-exp)
     (expresion (lista) lista-exp)
     (expresion (vector) vector-exp)
-    (espresion (registro) registro-exp)
+    (expresion (registro) registro-exp)
     (lista ("[" (separated-list expresion ",") "]") lista1)
     (vector ("vector" "[" (separated-list expresion ",") "]") vector1)
     (registro ("{" identificador "=" expresion (arbno ";" identificador "=" expresion)"}") registro1)
@@ -142,7 +144,7 @@
     (primitiva ("sub1_16") sub1_16)
     (primitiva ("lenght") lenght-exp)
     (primitiva ("concat") concat-exp)
-    (primitiva ("vacia") vacia-exp)
+    (primitiva ("vacio") vacio-exp)
     (primitiva ("crear-lista") crear-lista-exp)
     (primitiva ("lista?") lista?-exp)
     (primitiva ("cabeza") cabeza-exp)
@@ -164,15 +166,7 @@
     (pred-prim ("<>") diferente-exp)
     (oper-bin-bool ("and") and-exp)
     (oper-bin-bool ("or") or-exp)
-    (oper-un-bool ("not") not-exp)    
-    
-         
-
-
-
-
-
-
+    (oper-un-bool ("not") not-exp)
     )
   )
 
@@ -183,11 +177,34 @@
 (define scan&parse
   (sllgen:make-string-parser lexico gramatica))
 
-;;                  ::= rec  {<identificador> ({<identificador>}*(,)) = <expresion>}* in <expresion>
-;;                      <rec-exp (lproc ids cuerpos cuerporec)>
-;;(expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
-                ;;rec-exp)
+(define interpretador
+  (sllgen:make-rep-loop
+   ">>"
+   (lambda (pgm) pgm)
+   (sllgen:make-stream-parser lexico gramatica)
+   )
+  )
 
+
+;; pruebas de producciones
+;(scan&parse "5");  numero-exp
+;(scan&parse "x_16( 4 5 3)");  numerohex-exp
+;(scan&parse "'f'");  caracter-exp
+;(scan&parse "\" hola \"");  cadena-exp
+;(scan&parse "false");  false-exp
+;(scan&parse "true");  true-exp
+;(scan&parse "x");   identificador-exp
+;(scan&parse "var x = 6 in add1(x)");  var-exp
+;(scan&parse "$x"); refid-exp 
+;(scan&parse "set x -> 6");  asignar-exp
+;(scan&parse "cons x = 6 in imprimir(x)");  cons-exp
+;(scan&parse "rec f(x)= add1(x) in (f 7)"); rec-exp 
+;(scan&parse "begin imprimir(\"hola\") ; imprimir(\"mundo\") end");  begin-exp
+;(scan&parse "for x = 1 to 5 do imprimir(x) done");  for-exp con to
+;(scan&parse "for x = 5 downto 1 do imprimir(x) done");  for-exp con downto
+
+
+;(interpretador)
 
 
 
