@@ -4,6 +4,8 @@
 
 ;;<expresion>       ::= <numero>
 ;;                      <numero-exp (datum)>
+;;                  ::= x16 ( {<numero>}* )
+;;                      <numerohex-exp (lsnum)>
 ;;                  ::= <caracter>
 ;;                      <caracter-exp (caracter)>
 ;;                  ::= <cadena>
@@ -13,7 +15,7 @@
 ;;                  ::= <identificador>
 ;;                      <identificador-exp (id)>
 ;;                  ::= $<identificador>
-;;                      <identificadorR-exp (id)>                  
+;;                      <refid-exp (id)>                  
 ;;                  ::= var {<identificador> = <expresion>}*(,) in <expresion>
 ;;                      <var-exp (ids exps cuerpo)>
 ;;                  ::= <identificador> -> <expresion>
@@ -48,7 +50,8 @@
 ;;                      <print-exp>
 ;;                  ::= FNC <numero> (<clausula-or>)+("and")
 ;;<clausula-or>     ::= (<numero>)+("or")
-;;<primitiva>       ::= + | - | * | % | / | add1 | sub1
+;;<primitiva>       ::= + | - | * | % | / | add1 | sub1 | solveFNC
+;;                  ::= +_16 | -_16 | *_16 | add1_16 | sub1_16
 ;;                  ::= lenght | concat
 ;;                  ::= vacia | crear-lista | lista? | cabeza | cola | append
 ;;                  ::= vector? | crear-vec | ref-vec | set-vec
@@ -76,10 +79,8 @@
 (define lexico
   '(
     (espacioblanco (whitespace) skip)
-    (comentario ("#" (not "#/newline")) skip)
-    (caracter ((or letter digit)) string)
-    (alfanumerico (letter (arbno (or letter digit "?"))) string)
-    (identificador (letter (arbno (or letter digit))) symbol)
+    (comentario ("#" (not #\newline)) skip)
+    (identificador (letter (arbno (or letter digit))) symbol)    
     (numero (digit (arbno digit)) number)
     (numero (digit (arbno digit) "." digit (arbno digit)) number)
     (numero ("-" digit (arbno digit)) number)
@@ -92,12 +93,12 @@
     (BSAT (expresion) bsat-program)
     (expresion (numero) numero-exp)
     (expresion ("x16" "(" (arbno numero) ")") numerohex-exp)
-    (expresion ("'" caracter "'") caracter-exp)
-    (expresion ("\"" alfanumerico "\"") cadena-exp)
+    (expresion ("'" identificador "'") caracter-exp)
+    (expresion ("\"" identificador "\"") cadena-exp)
     (expresion (identificador) identificador-exp)
     (expresion ("$" identificador) refid-exp)
     (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
-    (expresion (identificador "->" expresion) asignar-exp)
+    (expresion ("set" identificador "->" expresion) asignar-exp)
     (expresion ("cons" (separated-list identificador "=" expresion ",") "in" expresion)  cons-exp)
     (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
                 rec-exp)
@@ -109,24 +110,33 @@
                 letrec-exp)
     (expresion ("imprimir" "(" expresion ")") print-exp)
     (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
+    (expresion ("if" expr-bool "then" expresion "[" "else" expresion "]" "end") if-exp)
+    (expresion ("while") while-exp)
     (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion)
     (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") union-comp)
     (expr-bool (bool) bool-exp)
     (expr-bool (oper-un-bool "(" expr-bool ")") op-comp)
     
-  
+;;                  ::= while <expr-bool> do <expresion> done
+;;                      <while-exp (expb exp)>
     (clausula-or (numero (arbno "or" numero)) clausula-or-exp)
     (to-o-downto ("to") to)
     (to-o-downto ("downto") downto)
     (bool ("true") true-exp)
     (bool ("false") false-exp)
+    (primitiva ("solveFNC") solve-fnc)
     (primitiva ("+") suma)
     (primitiva ("-") resta)
-    (primitiva ("*") multiplicacion)
+    (primitiva ("*") mult)
     (primitiva ("/") division)
     (primitiva ("%") modulo)
     (primitiva ("add1") add1)
     (primitiva ("sub1") sub1)
+    (primitiva ("+_16") suma16)
+    (primitiva ("-_16") resta16)
+    (primitiva ("*_16") mult16)
+    (primitiva ("add1_16") add1_16)
+    (primitiva ("sub1_16") sub1_16)
     (primitiva ("lenght") lenght-exp)
     (primitiva ("concat") concat-exp)
     (primitiva ("vacia") vacia-exp)
@@ -163,10 +173,7 @@
 ;;                      <registro-exp (registro)>
 ;;                  ::= <exp-bool>
 ;;                  ::= <bool-exp (exp-bool)>
-;;                  ::= if <expr-bool> then <expresion> [else <expresion> ] end
-;;                      <if-exp (expb exp1 exp2)>
-;;                  ::= while <expr-bool> do <expresion> done
-;;                      <while-exp (expb exp)>
+
 
 
 ;;<lista>           ::= [{<expresion>}*(;)]
@@ -184,7 +191,13 @@
 (sllgen:make-define-datatypes lexico gramatica)
 ;(sllgen:list-define-datatypes lexico gramatica)
 
+(define scan&parse
+  (sllgen:make-string-parser lexico gramatica))
 
+;;                  ::= rec  {<identificador> ({<identificador>}*(,)) = <expresion>}* in <expresion>
+;;                      <rec-exp (lproc ids cuerpos cuerporec)>
+;;(expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
+                ;;rec-exp)
 
 
 
