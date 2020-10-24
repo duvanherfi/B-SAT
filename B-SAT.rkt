@@ -1,5 +1,6 @@
 #lang eopl
 ;;<BSAT>      ::= <expresion>
+
 ;;                <bsat-program (exp)>
 
 ;;<expresion>       ::= <numero>
@@ -252,7 +253,3 @@
 ;(scan&parse "{x=2;y=5}");  registro-exp
 
 ;(interpretador)
-
-
-
-
