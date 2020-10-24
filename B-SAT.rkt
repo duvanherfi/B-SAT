@@ -203,38 +203,38 @@
 ;(scan&parse "for x = 1 to 5 do imprimir(x) done");  for-exp con to
 ;(scan&parse "for x = 5 downto 1 do imprimir(x) done");  for-exp con downto
 
-;(scan&parse "+(2,3)");  
-;(scan&parse "-(2,3)");  
-;(scan&parse "*(2,3)");  
-;(scan&parse "/(2,3)");  
-;(scan&parse "%(2,3)");  
-;(scan&parse "add1(2)");  
-;(scan&parse "sub1(2)");  
-;(scan&parse "+_16(2)");  
-;(scan&parse "-_16(2)");  
-;(scan&parse "*_16(2)");  
-;(scan&parse "add1_16(2)");  
-;(scan&parse "sub1_16(2)");  
-;(scan&parse "lenght(\"cadena\")");  
-;(scan&parse "concat(\"cadena\",\"cadena\")");  
-;(scan&parse "vacia()");  
-;         ;(scan&parse "crear-lista(append 5 [])");  
-;(scan&parse "lista?([x,y])");  
-;(scan&parse "cabeza([x,y])");  
-;(scan&parse "cola([x,y])");  
-;(scan&parse "append([x,y],[v,w])");  
-;(scan&parse "vector?(vector[x,y])");  
-;         ;(scan&parse "crear-vec(append 5 vector[])");  
-;(scan&parse "ref-vec(2,vector[x,y])");  
-;(scan&parse "set-vec(3,vector[x,y],5)");  
-;(scan&parse "registros?({x=8})");  
-;         ;(scan&parse "crear-reg(x=8,{})");  
-;(scan&parse "ref-reg(x,{x=8})");  
-;(scan&parse "set-reg(x,{x=8},9)");  
-;(scan&parse "proc(x) y");  
-;(scan&parse "imprimir(\"Hola\");  ");  
-;(scan&parse "FNC 2 (5 or 6)");  
-;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  
+;(scan&parse "+(2,3)"); prim-exp con +
+;(scan&parse "-(2,3)"); prim-exp con - 
+;(scan&parse "*(2,3)"); prim-exp con * 
+;(scan&parse "/(2,3)"); prim-exp con / 
+;(scan&parse "%(2,3)"); prim-exp con %
+;(scan&parse "add1(2)");  prim-exp con add1  
+;(scan&parse "sub1(2)");  prim-exp con sub1
+;(scan&parse "+_16(2)");  prim-exp con +_16
+;(scan&parse "-_16(2)");  prim-exp con -_16
+;(scan&parse "*_16(2)");  prim-exp con *_16
+;(scan&parse "add1_16(2)");  prim-exp con add1_16
+;(scan&parse "sub1_16(2)");  prim-exp con sub1_16
+;(scan&parse "lenght(\"cadena\")");  prim-exp con lenght
+;(scan&parse "concat(\"cadena\",\"cadena\")");  prim-exp con concat
+;(scan&parse "vacio()");  prim-exp con vacio
+;         ;(scan&parse "crear-lista(append 5 [])");  prim-exp con crear-lista 
+;(scan&parse "lista?([x,y])");  prim-exp con lista?
+;(scan&parse "cabeza([x,y])");  prim-exp con cabeza
+;(scan&parse "cola([x,y])");  prim-exp con cola
+;(scan&parse "append([x,y],[v,w])");  prim-exp con append
+;(scan&parse "vector?(vector[x,y])");  prim-exp con vector?
+;         ;(scan&parse "crear-vec(append 5 vector[])");  prim-exp con crear-vec
+;(scan&parse "ref-vec(2,vector[x,y])");  prim-exp con ref-vec
+;(scan&parse "set-vec(3,vector[x,y],5)");  prim-exp con set-vec
+;(scan&parse "registros?({x=8})");  prim-exp con registros?
+;         ;(scan&parse "crear-reg(x=8,{})");  prim-exp con crear-reg
+;(scan&parse "ref-reg(x,{x=8})");  prim-exp con ref-reg
+;(scan&parse "set-reg(x,{x=8},9)");  prim-exp con set-reg
+;(scan&parse "proc(x) y");  proc-exp
+;(scan&parse "imprimir(\"Hola\");  "); print-exp  
+;(scan&parse "FNC 2 (5 or 6)");  fnc-exp
+;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp
 ;(scan&parse "if <(2,3) then 2 [else 3] end");  
 ;(scan&parse "if >(2,3) then 2 [else 3] end");  
 ;(scan&parse "if <=(2,3) then 2 [else 3] end");  
