@@ -39,7 +39,7 @@
 ;;                      <if-exp (expb exp1 exp2)>
 ;;                  ::= while <expr-bool> do <expresion> done
 ;;                      <while-exp (expb exp)>
-;;                  ::= for <identificador> = <expresion> (to | downto) <expresion> do <expresion> done
+;;                  ::= for <identificador> = <expresion> <to-odownto> <expresion> do <expresion> done
 ;;                      <for-exp (id exp1 to-odwto exp2 exp3)>
 ;;                  ::= <primitiva> ({<expresion>}*(,))
 ;;                      <prim-exp (lexp)>
@@ -74,6 +74,10 @@
 ;;                      <vlr-bool (bool)>
 ;;                  ::= <oper-un-bool> (<expr-bool>)
 ;;                      <op-comp (oubool expb)>
+;;<to-odownto>      ::= to
+;;                      <to>
+;;                  ::= downto
+;;                      <downto>
 ;;<pred-prim>       ::= <|>|<=|>=|==|<>
 ;;<oper-bin-bool>   ::= and|or
 ;;<oper-un-bool>    ::= not
