@@ -171,7 +171,6 @@
     )
   )
 
-
 (sllgen:make-define-datatypes lexico gramatica)
 ;(sllgen:list-define-datatypes lexico gramatica)
 
@@ -204,6 +203,7 @@
 ;(scan&parse "begin imprimir(\"hola\") ; imprimir(\"mundo\") end");  begin-exp
 ;(scan&parse "for x = 1 to 5 do imprimir(x) done");  for-exp con to
 ;(scan&parse "for x = 5 downto 1 do imprimir(x) done");  for-exp con downto
+;(scan&parse "solveFNC(FNC 3 ((1 or 2 or 3) and (3 or 2 or 1)))");  solve-fnc
 ;(scan&parse "+(2,3)"); prim-exp con +
 ;(scan&parse "-(2,3)"); prim-exp con - 
 ;(scan&parse "*(2,3)"); prim-exp con * 
