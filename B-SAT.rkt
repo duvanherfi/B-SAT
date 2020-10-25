@@ -1,5 +1,6 @@
 #lang eopl
 ;;<BSAT>      ::= <expresion>
+
 ;;                <bsat-program (exp)>
 
 ;;<expresion>       ::= <numero>
@@ -186,6 +187,7 @@
 
 
 ;; pruebas de producciones
+
 ;(scan&parse "5");  numero-exp
 ;(scan&parse "x_16( 4 5 3)");  numerohex-exp
 ;(scan&parse "'f'");  caracter-exp
@@ -233,25 +235,21 @@
 ;(scan&parse "proc(x) y");  proc-exp
 ;(scan&parse "imprimir(\"Hola\");  "); print-exp  
 ;(scan&parse "FNC 2 (5 or 6)");  fnc-exp
-;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp
-;(scan&parse "if <(2,3) then 2 [else 3] end");  
-;(scan&parse "if >(2,3) then 2 [else 3] end");  
-;(scan&parse "if <=(2,3) then 2 [else 3] end");  
-;(scan&parse "if >=(2,3) then 2 [else 3] end");  
-;(scan&parse "if ==(2,3) then 2 [else 3] end");  
-;(scan&parse "if <>(2,3) then 2 [else 3] end");  
-;(scan&parse "if and(true,false) then 2 [else 3] end");  
-;(scan&parse "if or(true,false) then 2 [else 3] end");  
-;(scan&parse "if true then 2 [else 3] end");  
-;(scan&parse "if false then 2 [else 3] end");  
-;(scan&parse "if not(true) then 2 [else 3] end");  
-;(scan&parse "while not(true) do 2 done");  
-;(scan&parse "[4,5]");  
-;(scan&parse "vector[4,5]");  
-;(scan&parse "{x=2;y=5}");  
+;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp 
+;(scan&parse "if <(2,3) then 2 [else 3] end");  if-exp con pred-prim
+;(scan&parse "if >(2,3) then 2 [else 3] end");  if-exp con pred-prim
+;(scan&parse "if <=(2,3) then 2 [else 3] end");  if-exp con pred-prim
+;(scan&parse "if >=(2,3) then 2 [else 3] end");  if-exp con pred-prim
+;(scan&parse "if ==(2,3) then 2 [else 3] end");  if-exp con pred-prim
+;(scan&parse "if <>(2,3) then 2 [else 3] end");  if-exp con pred-prim
+;(scan&parse "if and(true,false) then 2 [else 3] end");  if-exp con oper-bin-bool
+;(scan&parse "if or(true,false) then 2 [else 3] end");  if-exp con oper-bin-bool
+;(scan&parse "if true then 2 [else 3] end");  if-exp con true-exp
+;(scan&parse "if false then 2 [else 3] end");  if-exp con false-exp
+;(scan&parse "if not(true) then 2 [else 3] end");  if-exp con oper-un-bool
+;(scan&parse "while not(true) do 2 done");  while-exp con oper-un-bool
+;(scan&parse "[4,5]");  lista-exp
+;(scan&parse "vector[4,5]");  vector-exp
+;(scan&parse "{x=2;y=5}");  registro-exp
 
 ;(interpretador)
-
-
-
-
