@@ -1,25 +1,29 @@
 #lang eopl
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;*********************** Duvan Hernandez Figueroa  - 202010009  *******************
+;*********************** Diego Fernando muñoz Arce - 202010032  *******************
+
+;;*********************************Gramatitca**************************************
+
 ;;<BSAT>      ::= <expresion>
 
 ;;                <bsat-program (exp)>
 
 ;;<expresion>       ::= <numero>
 ;;                      <numero-exp (datum)>
-;;                  ::= x16 ( {<numero>}* )
+;;                  ::= x16( {<numero>}* )
 ;;                      <numerohex-exp (lsnum)>
-;;                  ::= <caracter>
+;;                  ::= '<identificador>'
 ;;                      <caracter-exp (caracter)>
-;;                  ::= <cadena>
+;;                  ::= "<identificador>"
 ;;                      <cadena-exp (cadena)>
-;;                  ::= <bool>
-;;                      <bool-exp (bool)>
 ;;                  ::= <identificador>
 ;;                      <identificador-exp (id)>
 ;;                  ::= $<identificador>
 ;;                      <refid-exp (id)>                  
 ;;                  ::= var {<identificador> = <expresion>}*(,) in <expresion>
 ;;                      <var-exp (ids exps cuerpo)>
-;;                  ::= <identificador> -> <expresion>
+;;                  ::= set <identificador> -> <expresion>
 ;;                      <set-exp (id exp)>
 ;;                  ::= cons {<identificador> = <expresion>}*(,)
 ;;                      <cons-exp (ids exps cuerpo)> in <expresion>
@@ -34,8 +38,8 @@
 ;;                  ::= <exp-bool>
 ;;                      <bool-exp (exp-bool)>
 ;;                  ::= begin {<expresion>}+(;) end
-;;                      <begin-exp (lexps)>
-;;                  ::= if <expr-bool> then <expresion> [else <expresion> ] end
+;;                      <begin-exp (exp lexps)>
+;;                  ::= if <expr-bool> then <expresion> else <expresion> end
 ;;                      <if-exp (expb exp1 exp2)>
 ;;                  ::= while <expr-bool> do <expresion> done
 ;;                      <while-exp (expb exp)>
@@ -47,29 +51,28 @@
 ;;                      <proc-exp (ids body)>
 ;;                  ::= (<expresion> {expression}*)
 ;;                      <app-exp (expresion lexps)>
-;;                  ::= letrec  {<identificador> ({<identificador>}*(,)) = <expresion>}* in <expresion>
-;;                      <letrec-exp proc-names idss bodies bodyletrec>
-;;                  ::= imprimir (<expresion>)
+;;                  ::= print (<expresion>)
 ;;                      <print-exp>
 ;;                  ::= FNC <numero> (<clausula-or>)+("and")
-;;                      <fnc-exp (numero lc-or)>
+;;                      <fnc-exp (numero cla-or lcla-or)>
 ;;<clausula-or>     ::= (<numero>)+("or")
+;;                      <clausula-or-exp (n lsn)>
 ;;<primitiva>       ::= + | - | * | % | / | add1 | sub1 | solveFNC
 ;;                  ::= +_16 | -_16 | *_16 | add1_16 | sub1_16
 ;;                  ::= lenght | concat
-;;                  ::= vacia | crear-lista | lista? | cabeza | cola | append
-;;                  ::= vector? | crear-vec | ref-vec | set-vec
-;;                  ::= registros? | crear-reg | ref-reg | set-reg
+;;                  ::= empty | create-list | list? | head | tail | append
+;;                  ::= vector? | create-vec | ref-vec | set-vec
+;;                  ::= register? | create-reg | ref-reg | set-reg
 ;;<lista>           ::= [{<expresion>}*(;)]
-;;                      <lista (lexps)>
+;;                      <lista1 (lexps)>
 ;;<vector>          ::= vector[{<expresion>}*(;)]
-;;                      <vector (lexps)>
+;;                      <vector1 (lexps)>
 ;;<registro>        ::= {{<identificador> = <expresion>}+(;)}
-;;                      <registro (lids lexps)>
+;;                      <registro1 (id exp lids lexps)>
 ;;<expr-bool>       ::= <pred-prim> (<expresion> , <expresion>)
 ;;                      <comparacion (pprim exp1 exp2)>
 ;;                  ::= <oper-bin-bool> (<expr-bool> , <expr-bool>)
-;;                      <union (obbool expb expb)>
+;;                      <conjuncion (obbool expb1 expb1)>
 ;;                  ::= <bool>
 ;;                      <vlr-bool (bool)>
 ;;                  ::= <oper-un-bool> (<expr-bool>)
@@ -83,6 +86,8 @@
 ;;<oper-un-bool>    ::= not
 ;;<bool>            ::= true | false
 
+;;*********************************Definición Lexico**************************************
+
 (define lexico
   '(
     (espacioblanco (whitespace) skip)
@@ -95,6 +100,8 @@
     )
   )
 
+;;*********************************Definición Grámatica**********************************
+
 (define gramatica
   '(    
     (BSAT (expresion) bsat-program)    
@@ -102,7 +109,6 @@
     (expresion ("x_16(" (arbno numero) ")") numerohex-exp)
     (expresion ("'" identificador "'") caracter-exp)
     (expresion ("\"" identificador "\"") cadena-exp)
-    (expresion (expr-bool) bool-exp)
     (expresion (identificador) identificador-exp)
     (expresion ("$" identificador) refid-exp)
     (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
@@ -115,18 +121,19 @@
     (expresion (primitiva "(" (separated-list expresion ",") ")") prim-exp)
     (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
     (expresion ("(" expresion (arbno expresion) ")") app-exp)
-    (expresion ("imprimir" "(" expresion ")") print-exp)
+    (expresion ("print" "(" expresion ")") print-exp)
     (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
-    (expresion ("if" expr-bool "then" expresion "[" "else" expresion "]" "end") if-exp)
+    (expresion ("if" expr-bool "then" expresion "else" expresion "end") if-exp)
     (expresion ("while" expr-bool "do" expresion "done") while-exp)
     (expresion (lista) lista-exp)
     (expresion (vector) vector-exp)
     (expresion (registro) registro-exp)
+    (expresion (expr-bool) bool-exp)
     (lista ("[" (separated-list expresion ",") "]") lista1)
     (vector ("vector" "[" (separated-list expresion ",") "]") vector1)
     (registro ("{" identificador "=" expresion (arbno ";" identificador "=" expresion)"}") registro1)
     (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion)
-    (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") union-comp)
+    (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") conjuncion)
     (expr-bool (bool) vlr-bool)
     (expr-bool (oper-un-bool "(" expr-bool ")") op-comp) 
     (clausula-or ("(" numero (arbno "or" numero) ")" ) clausula-or-exp)
@@ -149,18 +156,18 @@
     (primitiva ("sub1_16") sub1_16)
     (primitiva ("lenght") lenght-exp)
     (primitiva ("concat") concat-exp)
-    (primitiva ("vacio") vacio-exp)
-    (primitiva ("crear-lista") crear-lista-exp)
-    (primitiva ("lista?") lista?-exp)
-    (primitiva ("cabeza") cabeza-exp)
-    (primitiva ("cola") cola-exp)
+    (primitiva ("empty") vacio-exp)
+    (primitiva ("create-list") crear-lista-exp)
+    (primitiva ("list?") lista?-exp)
+    (primitiva ("head") cabeza-exp)
+    (primitiva ("tail") cola-exp)
     (primitiva ("append") append-exp)
     (primitiva ("vector?") vector?-exp)
-    (primitiva ("crear-vec") crear-v-exp)
+    (primitiva ("create-vec") crear-v-exp)
     (primitiva ("ref-vec") ref-vec-exp)
     (primitiva ("set-vec") set-vec-exp)
-    (primitiva ("registros?")registros?-exp)
-    (primitiva ("crear-reg") crear-reg-exp)
+    (primitiva ("register?")registros?-exp)
+    (primitiva ("create-reg") crear-reg-exp)
     (primitiva ("ref-reg") ref-reg-exp)
     (primitiva ("set-reg") set-reg-exp)
     (pred-prim ("<") menor-exp)
@@ -174,12 +181,15 @@
     (oper-un-bool ("not") not-exp)
     )
   )
-
+;-------------------------------------------------------------------------------------------
 (sllgen:make-define-datatypes lexico gramatica)
 ;(sllgen:list-define-datatypes lexico gramatica)
+;-------------------------------------------------------------------------------------------
 
 (define scan&parse
   (sllgen:make-string-parser lexico gramatica))
+
+;-------------------------------------------------------------------------------------------
 
 (define interpretador
   (sllgen:make-rep-loop
@@ -189,8 +199,10 @@
    )
   )
 
+;(interpretador)
 
-;; pruebas de producciones
+; pruebas de producciones
+;-------------------------------------------------------------------------------------------
 
 ;(scan&parse "5");  numero-exp
 ;(scan&parse "x_16( 4 5 3)");  numerohex-exp
@@ -202,11 +214,13 @@
 ;(scan&parse "var x = 6 in add1(x)");  var-exp
 ;(scan&parse "$x"); refid-exp 
 ;(scan&parse "set x -> 6");  asignar-exp
-;(scan&parse "cons x = 6 in imprimir(x)");  cons-exp
+;(scan&parse "cons x = 6 in print(x)");  cons-exp
 ;(scan&parse "rec f(x)= add1(x) in (f 7)"); rec-exp 
-;(scan&parse "begin imprimir(\"hola\") ; imprimir(\"mundo\") end");  begin-exp
-;(scan&parse "for x = 1 to 5 do imprimir(x) done");  for-exp con to
-;(scan&parse "for x = 5 downto 1 do imprimir(x) done");  for-exp con downto
+;(scan&parse "begin print(\"hola\") ; print(\"mundo\") end");  begin-exp
+;(scan&parse "for x = 1 to 5 do print(x) done");  for-exp con to
+;(scan&parse "for x = 5 downto 1 do print(x) done");  for-exp con downto
+
+;---------------------------------prim-exp------------------------------------
 ;(scan&parse "solveFNC(FNC 3 ((1 or 2 or 3) and (3 or 2 or 1)))");  solve-fnc
 ;(scan&parse "+(2,3)"); prim-exp con +
 ;(scan&parse "-(2,3)"); prim-exp con - 
@@ -236,24 +250,29 @@
 ;         ;(scan&parse "crear-reg(x=8,{})");  prim-exp con crear-reg
 ;(scan&parse "ref-reg(x,{x=8})");  prim-exp con ref-reg
 ;(scan&parse "set-reg(x,{x=8},9)");  prim-exp con set-reg
+;---------------------------------------------------------------------------------
+
 ;(scan&parse "proc(x) y");  proc-exp
-;(scan&parse "imprimir(\"Hola\");  "); print-exp  
-;(scan&parse "FNC 2 (5 or 6)");  fnc-exp
-;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp 
-;(scan&parse "if <(2,3) then 2 [else 3] end");  if-exp con pred-prim
-;(scan&parse "if >(2,3) then 2 [else 3] end");  if-exp con pred-prim
-;(scan&parse "if <=(2,3) then 2 [else 3] end");  if-exp con pred-prim
-;(scan&parse "if >=(2,3) then 2 [else 3] end");  if-exp con pred-prim
-;(scan&parse "if ==(2,3) then 2 [else 3] end");  if-exp con pred-prim
-;(scan&parse "if <>(2,3) then 2 [else 3] end");  if-exp con pred-prim
-;(scan&parse "if and(true,false) then 2 [else 3] end");  if-exp con oper-bin-bool
-;(scan&parse "if or(true,false) then 2 [else 3] end");  if-exp con oper-bin-bool
-;(scan&parse "if true then 2 [else 3] end");  if-exp con true-exp
-;(scan&parse "if false then 2 [else 3] end");  if-exp con false-exp
-;(scan&parse "if not(true) then 2 [else 3] end");  if-exp con oper-un-bool
+;(scan&parse "(x 5)");  app-exp
+;(scan&parse "print(\"Hola\")"); print-exp
+;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp
+
+;-----------------------------------if-exp----------------------------------------
+;(scan&parse "if <(2,3) then 2 else 3 end");  if-exp con pred-prim
+;(scan&parse "if >(2,3) then 2 else 3 end");  if-exp con pred-prim
+;(scan&parse "if <=(2,3) then 2 else 3 end");  if-exp con pred-prim
+;(scan&parse "if >=(2,3) then 2 else 3 end");  if-exp con pred-prim
+;(scan&parse "if ==(2,3) then 2 else 3 end");  if-exp con pred-prim
+;(scan&parse "if <>(2,3) then 2 else 3 end");  if-exp con pred-prim
+;(scan&parse "if and(true,false) then 2 else 3 end");  if-exp con oper-bin-bool
+;(scan&parse "if or(true,false) then 2 else 3 end");  if-exp con oper-bin-bool
+;(scan&parse "if true then 2 else 3 end");  if-exp con true-exp
+;(scan&parse "if false then 2 else 3 end");  if-exp con false-exp
+;(scan&parse "if not(true) then 2 else 3 end");  if-exp con oper-un-bool
+
+;---------------------------------------------------------------------------------
 ;(scan&parse "while not(true) do 2 done");  while-exp con oper-un-bool
 ;(scan&parse "[4,5]");  lista-exp
 ;(scan&parse "vector[4,5]");  vector-exp
 ;(scan&parse "{x=2;y=5}");  registro-exp
-
-;(interpretador)
+;(scan&parse "<(2,1)");  bool-exp
