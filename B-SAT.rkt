@@ -13,9 +13,9 @@
 ;;                      <numero-exp (datum)>
 ;;                  ::= x16( {<numero>}* )
 ;;                      <numerohex-exp (lsnum)>
-;;                  ::= '<identificador>'
+;;                  ::= '<caracter>'
 ;;                      <caracter-exp (caracter)>
-;;                  ::= "<identificador>"
+;;                  ::= "<cadena>"
 ;;                      <cadena-exp (cadena)>
 ;;                  ::= <identificador>
 ;;                      <identificador-exp (id)>
@@ -45,8 +45,16 @@
 ;;                      <while-exp (expb exp)>
 ;;                  ::= for <identificador> = <expresion> <to-odownto> <expresion> do <expresion> done
 ;;                      <for-exp (id exp1 to-odwto exp2 exp3)>
-;;                  ::= <primitiva> ({<expresion>}*(,))
-;;                      <prim-exp (lexp)>
+;;                  ::= create-reg(<identificador> = <expresion> , <registro>)
+;;                      <create-reg (id exp reg)>
+;;                  ::= set-vec ( <expresion> , <vector> , <expresion>)
+;;                      <set-vec (pos vec val)>
+;;                  ::= set-rec ( <expresion> , <registro> , <expresion>)
+;;                      <set-rec (pos reg val)>
+;;                  ::= <prim-bin> (expresion , expresion)
+;;                      <primbin-exp (lexp)>
+;;                  ::= <prim-un> (expresion)
+;;                      <primun-exp (lexp)>
 ;;                  ::= proc({<identificador>}*(,)) <expresion>
 ;;                      <proc-exp (ids body)>
 ;;                  ::= (<expresion> {expression}*)
@@ -57,12 +65,17 @@
 ;;                      <fnc-exp (numero cla-or lcla-or)>
 ;;<clausula-or>     ::= (<numero>)+("or")
 ;;                      <clausula-or-exp (n lsn)>
-;;<primitiva>       ::= + | - | * | % | / | add1 | sub1 | solveFNC
-;;                  ::= +_16 | -_16 | *_16 | add1_16 | sub1_16
-;;                  ::= lenght | concat
-;;                  ::= empty | create-list | list? | head | tail | append
-;;                  ::= vector? | create-vec | ref-vec | set-vec
-;;                  ::= register? | create-reg | ref-reg | set-reg
+;;-----------------------primitivas binarias------------------------
+;;<prim-bin>        ::= + | - | * | % | / | +_16 | -_16 | *_16
+;;                  ::= create-list | append | create-vec | create-reg
+;;                  ::= ref-vec |  | ref-reg | set-reg
+;;-----------------------privimitivas unarias-----------------------
+;;<prim-un>         ::= solveFNC | lenght | concat
+;;                  ::= add1 | sub1 | add1_16 | sub1_16
+;;                  ::= empty | list? | head | tail
+;;                  ::= vector?
+;;                  ::= register?
+;;------------------------------------------------------------------
 ;;<lista>           ::= [{<expresion>}*(;)]
 ;;                      <lista1 (lexps)>
 ;;<vector>          ::= vector[{<expresion>}*(;)]
@@ -92,7 +105,9 @@
   '(
     (espacioblanco (whitespace) skip)
     (comentario ("#" (not #\newline)) skip)
-    (identificador (letter (arbno (or letter digit))) symbol)    
+    (identificador ("@" letter (arbno (or letter digit))) symbol)
+    (letras (letter) string)
+    (letras (letter (arbno (or letter digit))) string)    
     (numero (digit (arbno digit)) number)
     (numero (digit (arbno digit) "." digit (arbno digit)) number)
     (numero ("-" digit (arbno digit)) number)
@@ -107,8 +122,8 @@
     (BSAT (expresion) bsat-program)    
     (expresion (numero) numero-exp)
     (expresion ("x_16(" (arbno numero) ")") numerohex-exp)
-    (expresion ("'" identificador "'") caracter-exp)
-    (expresion ("\"" identificador "\"") cadena-exp)
+    (expresion ("'" letras "'") caracter-exp)
+    (expresion ("\"" letras "\"") cadena-exp)
     (expresion (identificador) identificador-exp)
     (expresion ("$" identificador) refid-exp)
     (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
@@ -118,13 +133,17 @@
                 rec-exp)
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
     (expresion ("for" identificador "=" expresion to-o-downto expresion "do" expresion "done") for-exp)    
-    (expresion (primitiva "(" (separated-list expresion ",") ")") prim-exp)
+    (expresion (prim-bin "(" expresion "," expresion ")") primbin-exp)
+    (expresion (prim-un "(" expresion ")") primun-exp)
     (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
     (expresion ("(" expresion (arbno expresion) ")") app-exp)
     (expresion ("print" "(" expresion ")") print-exp)
     (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
     (expresion ("if" expr-bool "then" expresion "else" expresion "end") if-exp)
     (expresion ("while" expr-bool "do" expresion "done") while-exp)
+    (expresion ("set-vec" "(" expresion "," vector "," expresion ")") set-vec-exp)
+    (expresion ("set-reg" "(" expresion "," registro "," expresion ")") set-reg-exp)
+    (expresion ("create-reg" "(" identificador "=" expresion "," registro")") crear-reg-exp)
     (expresion (lista) lista-exp)
     (expresion (vector) vector-exp)
     (expresion (registro) registro-exp)
@@ -141,35 +160,37 @@
     (to-o-downto ("downto") downto)
     (bool ("true") true-exp)
     (bool ("false") false-exp)
-    (primitiva ("solveFNC") solve-fnc)
-    (primitiva ("+") suma)
-    (primitiva ("-") resta)
-    (primitiva ("*") mult)
-    (primitiva ("/") division)
-    (primitiva ("%") modulo)
-    (primitiva ("add1") add1)
-    (primitiva ("sub1") sub1)
-    (primitiva ("+_16") suma16)
-    (primitiva ("-_16") resta16)
-    (primitiva ("*_16") mult16)
-    (primitiva ("add1_16") add1_16)
-    (primitiva ("sub1_16") sub1_16)
-    (primitiva ("lenght") lenght-exp)
-    (primitiva ("concat") concat-exp)
-    (primitiva ("empty") vacio-exp)
-    (primitiva ("create-list") crear-lista-exp)
-    (primitiva ("list?") lista?-exp)
-    (primitiva ("head") cabeza-exp)
-    (primitiva ("tail") cola-exp)
-    (primitiva ("append") append-exp)
-    (primitiva ("vector?") vector?-exp)
-    (primitiva ("create-vec") crear-v-exp)
-    (primitiva ("ref-vec") ref-vec-exp)
-    (primitiva ("set-vec") set-vec-exp)
-    (primitiva ("register?")registros?-exp)
-    (primitiva ("create-reg") crear-reg-exp)
-    (primitiva ("ref-reg") ref-reg-exp)
-    (primitiva ("set-reg") set-reg-exp)
+
+    ;------------primitivas unarias-------------
+    (prim-un ("solveFNC") solve-fnc)
+    (prim-un ("add1") add1)
+    (prim-un ("sub1") sub1)    
+    (prim-un ("add1_16") add1_16)
+    (prim-un ("sub1_16") sub1_16)
+    (prim-un ("lenght") lenght-exp)
+    (prim-un ("concat") concat-exp)
+    (prim-un ("empty") vacio-exp)    
+    (prim-un ("list?") lista?-exp)
+    (prim-un ("head") cabeza-exp)
+    (prim-un ("tail") cola-exp) 
+    (prim-un ("register?") registros?-exp)
+    (prim-un ("vector?") vector?-exp)
+    
+    ;------------primitivas binarias-------------
+    (prim-bin ("%") modulo)
+    (prim-bin ("+") suma)
+    (prim-bin ("-") resta)
+    (prim-bin ("*") mult)
+    (prim-bin ("/") division)
+    (prim-bin ("+_16") suma16)
+    (prim-bin ("-_16") resta16)
+    (prim-bin ("*_16") mult16)
+    (prim-bin ("append") append-exp)
+    (prim-bin ("create-list") crear-lista-exp)
+    (prim-bin ("create-vec") crear-v-exp)
+    (prim-bin ("ref-vec") ref-vec-exp)   
+    (prim-bin ("ref-reg") ref-reg-exp)
+        
     (pred-prim ("<") menor-exp)
     (pred-prim (">") mayor-exp)
     (pred-prim ("<=") menor=exp)
@@ -199,7 +220,7 @@
    )
   )
 
-;(interpretador)
+(interpretador)
 
 ; pruebas de producciones
 ;-------------------------------------------------------------------------------------------
@@ -210,15 +231,15 @@
 ;(scan&parse "\" hola \"");  cadena-exp
 ;(scan&parse "false");  false-exp
 ;(scan&parse "true");  true-exp
-;(scan&parse "x");   identificador-exp
-;(scan&parse "var x = 6 in add1(x)");  var-exp
-;(scan&parse "$x"); refid-exp 
-;(scan&parse "set x -> 6");  asignar-exp
-;(scan&parse "cons x = 6 in print(x)");  cons-exp
-;(scan&parse "rec f(x)= add1(x) in (f 7)"); rec-exp 
+;(scan&parse "@x");   identificador-exp
+;(scan&parse "var @x = 6 in add1(@x)");  var-exp
+;(scan&parse "$@x"); refid-exp 
+;(scan&parse "set @x -> 6");  asignar-exp
+;(scan&parse "cons @x = 6 in print(@x)");  cons-exp
+;(scan&parse "rec @f(@x)= add1(@x) in (@f 7)"); rec-exp 
 ;(scan&parse "begin print(\"hola\") ; print(\"mundo\") end");  begin-exp
-;(scan&parse "for x = 1 to 5 do print(x) done");  for-exp con to
-;(scan&parse "for x = 5 downto 1 do print(x) done");  for-exp con downto
+;(scan&parse "for @x = 1 to 5 do print(@x) done");  for-exp con to
+;(scan&parse "for @x = 5 downto 1 do print(@x) done");  for-exp con downto
 
 ;---------------------------------prim-exp------------------------------------
 ;(scan&parse "solveFNC(FNC 3 ((1 or 2 or 3) and (3 or 2 or 1)))");  solve-fnc
@@ -237,23 +258,24 @@
 ;(scan&parse "lenght(\"cadena\")");  prim-exp con lenght
 ;(scan&parse "concat(\"cadena\",\"cadena\")");  prim-exp con concat
 ;(scan&parse "vacio()");  prim-exp con vacio
-;         ;(scan&parse "crear-lista(append 5 [])");  prim-exp con crear-lista 
-;(scan&parse "lista?([x,y])");  prim-exp con lista?
-;(scan&parse "cabeza([x,y])");  prim-exp con cabeza
-;(scan&parse "cola([x,y])");  prim-exp con cola
-;(scan&parse "append([x,y],[v,w])");  prim-exp con append
-;(scan&parse "vector?(vector[x,y])");  prim-exp con vector?
-;         ;(scan&parse "crear-vec(append 5 vector[])");  prim-exp con crear-vec
-;(scan&parse "ref-vec(2,vector[x,y])");  prim-exp con ref-vec
-;(scan&parse "set-vec(3,vector[x,y],5)");  prim-exp con set-vec
-;(scan&parse "registros?({x=8})");  prim-exp con registros?
-;         ;(scan&parse "crear-reg(x=8,{})");  prim-exp con crear-reg
-;(scan&parse "ref-reg(x,{x=8})");  prim-exp con ref-reg
-;(scan&parse "set-reg(x,{x=8},9)");  prim-exp con set-reg
+;(scan&parse "create-list(5,[])");  prim-exp con crear-lista 
+;(scan&parse "list?([@x,@y])");  prim-exp con lista?
+;(scan&parse "head([@x,@y])");  prim-exp con cabeza
+;(scan&parse "tail([@x,@y])");  prim-exp con cola
+;(scan&parse "append([@x,@y],[@v,@w])");  prim-exp con append
+;(scan&parse "vector?(vector[@x,@y])");  prim-exp con vector?
+;(scan&parse "create-vec(5 , vector[])");  prim-exp con crear-vec
+;(scan&parse "ref-vec(2,vector[@x,@y])");  prim-exp con ref-vec
+;(scan&parse "register? ({@x=8})");  prim-exp con register?
+;(scan&parse "create-reg(@x=8,{@d=3})");  prim-exp con crear-reg
+;(scan&parse "ref-reg(@x,{@x=8})");  prim-exp con ref-reg
+
 ;---------------------------------------------------------------------------------
 
-;(scan&parse "proc(x) y");  proc-exp
-;(scan&parse "(x 5)");  app-exp
+;(scan&parse "set-vec(3,vector[@x,@y],5)");  prim-exp con set-vec
+;(scan&parse "set-reg(@x,{@x=8},9)");  prim-exp con set-reg
+;(scan&parse "proc(@x) @x");  proc-exp
+;(scan&parse "(@x 5)");  app-exp
 ;(scan&parse "print(\"Hola\")"); print-exp
 ;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp
 
@@ -274,5 +296,5 @@
 ;(scan&parse "while not(true) do 2 done");  while-exp con oper-un-bool
 ;(scan&parse "[4,5]");  lista-exp
 ;(scan&parse "vector[4,5]");  vector-exp
-;(scan&parse "{x=2;y=5}");  registro-exp
+;(scan&parse "{@x=2;@y=5}");  registro-exp
 ;(scan&parse "<(2,1)");  bool-exp
