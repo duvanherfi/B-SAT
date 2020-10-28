@@ -68,9 +68,9 @@
 ;;-----------------------primitivas binarias------------------------
 ;;<prim-bin>        ::= + | - | * | % | / | +_16 | -_16 | *_16
 ;;                  ::= create-list | append | create-vec | create-reg
-;;                  ::= ref-vec |  | ref-reg | set-reg
+;;                  ::= ref-vec |  | ref-reg | set-reg | concat
 ;;-----------------------privimitivas unarias-----------------------
-;;<prim-un>         ::= solveFNC | lenght | concat
+;;<prim-un>         ::= solveFNC | lenght 
 ;;                  ::= add1 | sub1 | add1_16 | sub1_16
 ;;                  ::= empty | list? | head | tail
 ;;                  ::= vector?
@@ -168,7 +168,6 @@
     (prim-un ("add1_16") add1_16)
     (prim-un ("sub1_16") sub1_16)
     (prim-un ("lenght") lenght-exp)
-    (prim-un ("concat") concat-exp)
     (prim-un ("empty") vacio-exp)    
     (prim-un ("list?") lista?-exp)
     (prim-un ("head") cabeza-exp)
@@ -185,6 +184,7 @@
     (prim-bin ("+_16") suma16)
     (prim-bin ("-_16") resta16)
     (prim-bin ("*_16") mult16)
+    (prim-bin ("concat") concat-exp)
     (prim-bin ("append") append-exp)
     (prim-bin ("create-list") crear-lista-exp)
     (prim-bin ("create-vec") crear-v-exp)
