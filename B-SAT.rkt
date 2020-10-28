@@ -226,11 +226,11 @@
 ;-------------------------------------------------------------------------------------------
 
 ;(scan&parse "5");  numero-exp
-;(scan&parse "x_16( 4 5 3)");  numerohex-exp
+;(scan&parse "x_16(4 5 3)");  numerohex-exp
 ;(scan&parse "'f'");  caracter-exp
 ;(scan&parse "\" hola \"");  cadena-exp
-;(scan&parse "false");  false-exp
-;(scan&parse "true");  true-exp
+;(scan&parse "false");  bool-exp con false-exp
+;(scan&parse "true");  bool-exp con true-exp
 ;(scan&parse "@x");   identificador-exp
 ;(scan&parse "var @x = 6 in add1(@x)");  var-exp
 ;(scan&parse "$@x"); refid-exp 
