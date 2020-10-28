@@ -189,21 +189,22 @@
 ;; pruebas de producciones
 
 ;(scan&parse "5");  numero-exp
-;(scan&parse "x_16( 4 5 3)");  numerohex-exp
+;(scan&parse "x_16(4 5 3)");  numerohex-exp
 ;(scan&parse "'f'");  caracter-exp
 ;(scan&parse "\" hola \"");  cadena-exp
-;(scan&parse "false");  false-exp
-;(scan&parse "true");  true-exp
+;(scan&parse "false");  bool-exp con false-exp
+;(scan&parse "true");  bool-exp con true-exp
 ;(scan&parse "x");   identificador-exp
-;(scan&parse "var x = 6 in add1(x)");  var-exp
-;(scan&parse "$x"); refid-exp 
+;(scan&parse "$x"); refid-exp
+;;-----------------------------------------------------------------------
+;(scan&parse "var x = 6 in add1(x)");  var-exp Para qué es el in?
+;;-----------------------------------------------------------------------
 ;(scan&parse "set x -> 6");  asignar-exp
 ;(scan&parse "cons x = 6 in imprimir(x)");  cons-exp
 ;(scan&parse "rec f(x)= add1(x) in (f 7)"); rec-exp 
 ;(scan&parse "begin imprimir(\"hola\") ; imprimir(\"mundo\") end");  begin-exp
 ;(scan&parse "for x = 1 to 5 do imprimir(x) done");  for-exp con to
 ;(scan&parse "for x = 5 downto 1 do imprimir(x) done");  for-exp con downto
-;(scan&parse "solveFNC(FNC 3 ((1 or 2 or 3) and (3 or 2 or 1)))");  solve-fnc
 ;(scan&parse "+(2,3)"); prim-exp con +
 ;(scan&parse "-(2,3)"); prim-exp con - 
 ;(scan&parse "*(2,3)"); prim-exp con * 
@@ -225,16 +226,20 @@
 ;(scan&parse "cola([x,y])");  prim-exp con cola
 ;(scan&parse "append([x,y],[v,w])");  prim-exp con append
 ;(scan&parse "vector?(vector[x,y])");  prim-exp con vector?
-;         ;(scan&parse "crear-vec(append 5 vector[])");  prim-exp con crear-vec
+         ;(scan&parse "crear-vec(append 5 vector[])");  prim-exp con crear-vec
 ;(scan&parse "ref-vec(2,vector[x,y])");  prim-exp con ref-vec
 ;(scan&parse "set-vec(3,vector[x,y],5)");  prim-exp con set-vec
 ;(scan&parse "registros?({x=8})");  prim-exp con registros?
 ;         ;(scan&parse "crear-reg(x=8,{})");  prim-exp con crear-reg
 ;(scan&parse "ref-reg(x,{x=8})");  prim-exp con ref-reg
 ;(scan&parse "set-reg(x,{x=8},9)");  prim-exp con set-reg
+;(scan&parse "solveFNC(FNC 3 ((1 or 2 or 3) and (3 or 2 or 1)))");  solve-fnc
 ;(scan&parse "proc(x) y");  proc-exp
-;(scan&parse "imprimir(\"Hola\");  "); print-exp  
-;(scan&parse "FNC 2 (5 or 6)");  fnc-exp
+;(scan&parse "(5)");  app-exp
+;(scan&parse "imprimir(\"Hola\")"); print-exp
+;;------------------------------------------------------------------
+;(scan&parse "FNC 2 ((5 or 6))");  fnc-exp No funciona sin el doble paréntesis
+;------------------------------------------------------------------
 ;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp 
 ;(scan&parse "if <(2,3) then 2 [else 3] end");  if-exp con pred-prim
 ;(scan&parse "if >(2,3) then 2 [else 3] end");  if-exp con pred-prim
