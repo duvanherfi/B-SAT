@@ -2,7 +2,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;*********************** Duvan Hernandez Figueroa  - 202010009  *******************
 ;*********************** Diego Fernando muñoz Arce - 202010032  *******************
-;*********************** Leidy Johana Rivera Pazmiño - 202024011  *******************
 
 ;;*********************************Gramatitca**************************************
 
@@ -11,7 +10,7 @@
 ;;                <bsat-program (exp)>
 
 ;;<expresion>       ::= <numero>
-;;                      <numero-exp (datum)>
+;;                      <num-exp (datum)>
 ;;                  ::= x16( {<numero>}* )
 ;;                      <numerohex-exp (lsnum)>
 ;;                  ::= '<caracter>'
@@ -225,12 +224,46 @@
 
 ;Bignum
 ;-------------------------------------------------------------------------------------------
+(define zero
+  (lambda ()
+    '()))
 
-(define-datatype bignum bignum?
-  (zero)
-  (succesor (n bignum?))
-  (predeccesor (n bignum?))
-)
+(define base 16)
+
+(define is-zero?
+  (lambda (n)
+    (null? n)))
+
+(define successor
+  (lambda (n)
+    (if (is-zero? n)
+	'(1)
+	(let ((t (+ (car n) 1)))
+	  (if (= t base)
+	      (cons 0 (successor (cdr n)))
+	      (cons t (cdr n))
+              )
+          )
+        )
+    )
+  )
+
+(define predecessor
+  (lambda (n)
+    (cond
+     ((is-zero? n) (eopl:error "cero no tiene predecesor"))
+     ((>= (car n) base) (eopl:error "el valor debe ser menor que 16"))
+     ((equal? n '(1)) '())
+     ((zero? (car n))
+      (if (null? (cdr n))
+	  (eopl:error "cero no tiene predecesor")
+	  (cons (- base 1) (predecessor (cdr n)))
+          )
+      )
+      (else (cons (- (car n) 1) (cdr n)))
+      )
+    )
+  )
 
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
