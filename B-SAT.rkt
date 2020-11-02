@@ -121,7 +121,7 @@
 (define gramatica
   '(    
     (BSAT (expresion) bsat-program)    
-    (expresion (numero) numero-exp)
+    (expresion (numero) num-exp)
     (expresion ("x_16(" (arbno numero) ")") numerohex-exp)
     (expresion ("'" letras "'") caracter-exp)
     (expresion ("\"" letras "\"") cadena-exp)
@@ -206,22 +206,68 @@
 ;-------------------------------------------------------------------------------------------
 (sllgen:make-define-datatypes lexico gramatica)
 ;(sllgen:list-define-datatypes lexico gramatica)
+
+;scan&parse
 ;-------------------------------------------------------------------------------------------
 
 (define scan&parse
   (sllgen:make-string-parser lexico gramatica))
+
+;ambiente
+;-------------------------------------------------------------------------------------------
+(define-datatype ambiente ambiente?
+  (empty-env)
+  (extend-env (lvar (list-of symbol?))
+              (lvalor vector?)
+              (env ambiente?)
+              )
+  )
+
+;Bignum
+;-------------------------------------------------------------------------------------------
+
+(define-datatype bignum bignum?
+  (zero)
+  (succesor (n bignum?))
+  (predeccesor (n bignum?))
+)
+
+;eval-expresion
+;-------------------------------------------------------------------------------------------
+(define eval-expresion
+  (lambda (pgm)
+    (cases expresion pgm
+      (num-exp (n) n)
+      (numerohex-exp (lnum) lnum)
+      (caracter-exp (caracter) (string->symbol caracter))
+      (cadena-exp (cad) cad)      
+      (else pgm)
+      )
+    )
+  )
+
+;eval-program
+;-------------------------------------------------------------------------------------------
+
+(define eval-program
+  (lambda (pgm)
+    (cases BSAT pgm
+        (bsat-program (exp) (eval-expresion exp))
+        )
+    )
+  )
 
 ;-------------------------------------------------------------------------------------------
 
 (define interpretador
   (sllgen:make-rep-loop
    ">>"
-   (lambda (pgm) pgm)
+   (lambda (pgm) (eval-program pgm))
    (sllgen:make-stream-parser lexico gramatica)
    )
   )
 
-;(interpretador)
+(interpretador)
 
 ; pruebas de producciones
 ;-------------------------------------------------------------------------------------------
