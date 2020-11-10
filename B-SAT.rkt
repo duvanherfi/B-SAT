@@ -31,7 +31,7 @@
 ;;                      <rec-exp (lproc ids cuerpos cuerporec)>
 ;;                  ::= <lista>
 ;;                      <lista-exp (lista)>
-;;                  ::= <vector>
+;;                  ::= <vectorB>
 ;;                      <vector-exp (vector)>
 ;;                  ::= <registro>
 ;;                      <registro-exp (registro)>
@@ -47,11 +47,11 @@
 ;;                      <for-exp (id exp1 to-odwto exp2 exp3)>
 ;;                  ::= create-reg(<identificador> = <expresion> , <registro>)
 ;;                      <create-reg (id exp reg)>
-;;                  ::= set-vec ( <expresion> , <vector> , <expresion>)
+;;                  ::= set-vec ( <expresion> , <vectorB> , <expresion>)
 ;;                      <set-vec (pos vec val)>
 ;;                  ::= set-rec ( <expresion> , <registro> , <expresion>)
 ;;                      <set-rec (pos reg val)>
-;;                  ::= <prim-bin> (expresion , expresion)
+;;                  ::= <prim-bin> (expresion {, expresion}*
 ;;                      <primbin-exp (lexp)>
 ;;                  ::= <prim-un> (expresion)
 ;;                      <primun-exp (lexp)>
@@ -72,13 +72,15 @@
 ;;-----------------------privimitivas unarias-----------------------
 ;;<prim-un>         ::= solveFNC | lenght 
 ;;                  ::= add1 | sub1 | add1_16 | sub1_16
-;;                  ::= empty | list? | head | tail
+;;                  ::= list? | head | tail
 ;;                  ::= vector?
 ;;                  ::= register?
 ;;------------------------------------------------------------------
-;;<lista>           ::= [{<expresion>}*(;)]
+;;<lista>           ::= empty
+;;                      <empty-list>
+;;                  ::= [{<expresion>}*(;)]
 ;;                      <lista1 (lexps)>
-;;<vector>          ::= vector[{<expresion>}*(;)]
+;;<vectorB>          ::= vector[{<expresion>}*(;)]
 ;;                      <vector1 (lexps)>
 ;;<registro>        ::= {{<identificador> = <expresion>}+(;)}
 ;;                      <registro1 (id exp lids lexps)>
@@ -133,7 +135,7 @@
                 rec-exp)
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
     (expresion ("for" identificador "=" expresion to-o-downto expresion "do" expresion "done") for-exp)    
-    (expresion (prim-bin "(" expresion "," expresion ")") primbin-exp)
+    (expresion (prim-bin "(" expresion (arbno "," expresion) ")") primbin-exp)
     (expresion (prim-un "(" expresion ")") primun-exp)
     (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
     (expresion ("(" expresion (arbno expresion) ")") app-exp)
@@ -141,15 +143,16 @@
     (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
     (expresion ("if" expr-bool "then" expresion "else" expresion "end") if-exp)
     (expresion ("while" expr-bool "do" expresion "done") while-exp)
-    (expresion ("set-vec" "(" expresion "," vector "," expresion ")") set-vec-exp)
+    (expresion ("set-vec" "(" expresion "," vectorB "," expresion ")") set-vec-exp)
     (expresion ("set-reg" "(" expresion "," registro "," expresion ")") set-reg-exp)
     (expresion ("create-reg" "(" identificador "=" expresion "," registro")") crear-reg-exp)
     (expresion (lista) lista-exp)
-    (expresion (vector) vector-exp)
+    (expresion (vectorB) vector-exp)
     (expresion (registro) registro-exp)
     (expresion (expr-bool) bool-exp)
+    (lista ("empty") empty-list)
     (lista ("[" (separated-list expresion ",") "]") lista1)
-    (vector ("vector" "[" (separated-list expresion ",") "]") vector1)
+    (vectorB ("vector" "[" (separated-list expresion ",") "]") vector1)
     (registro ("{" identificador "=" expresion (arbno ";" identificador "=" expresion)"}") registro1)
     (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion)
     (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") conjuncion)
@@ -167,13 +170,12 @@
     (prim-un ("sub1") sub1)    
     (prim-un ("add1_16") add1_16)
     (prim-un ("sub1_16") sub1_16)
-    (prim-un ("lenght") lenght-exp)
-    (prim-un ("empty") vacio-exp)    
+    (prim-un ("lenght") lenght-exp)   
     (prim-un ("list?") lista?-exp)
     (prim-un ("head") cabeza-exp)
     (prim-un ("tail") cola-exp) 
     (prim-un ("register?") registros?-exp)
-    (prim-un ("vector?") vector?-exp)
+    (prim-un ("vector?") isvector-exp)
     
     ;------------primitivas binarias-------------
     (prim-bin ("%") modulo)
@@ -219,8 +221,52 @@
   (extend-env (lvar (list-of symbol?))
               (lvalor vector?)
               (env ambiente?)
-              )
+              )  
   )
+
+;referencia
+;-------------------------------------------------------------------------------------------
+(define-datatype referencia referencia?  
+  (a-ref (pos number?) (vec vector?))  
+  )
+
+;target
+;-------------------------------------------------------------------------------------------
+(define ref-to-direct-target?
+  (lambda (val)
+    (if (referencia? val)
+        (cases referencia val
+          (a-ref (pos vec)
+                 (cases target (vector-ref vec pos)
+                   (direct-target (expval) #t)
+                   (indirect-target (ref) (eopl:error "no puede pasar una referencia enre procedimientos")
+                   )
+                 )
+                 )
+          )
+        #f
+        )
+    )
+  )
+
+(define no-refid-exp?
+  (lambda (exp)
+    (cond
+      [(number? exp) #t]
+      [(expresion? exp)
+       (cases expresion exp
+         (refid-exp (id) #f)
+         (else #t)
+         )]
+      )    
+    )
+  )
+
+(define-datatype target target?
+  (direct-target (expval no-refid-exp?))
+  (indirect-target (ref ref-to-direct-target?))
+  )
+
 
 ;Bignum
 ;-------------------------------------------------------------------------------------------
@@ -265,15 +311,130 @@
     )
   )
 
+;apply-env-ref
+;-------------------------------------------------------------------------------------------
+(define apply-env-ref
+  (lambda (amb var)
+    (cases ambiente amb
+      (empty-env () (eopl:error "no se encontró la variable ~s" var))
+      (extend-env (lvar vec env)
+                  (letrec
+                      [
+                       (buscar-ambiente
+                        (lambda (pos lids)
+                          (cond
+                            [(null? lids) (apply-env-ref env var)]
+                            [(equal? var (car lids)) (a-ref pos vec)]
+                            [else (buscar-ambiente (+ pos 1) (cdr lids))]
+                            )
+                          )
+                        )
+                       ]
+                    (buscar-ambiente 0 lvar)
+                      )
+                  )
+      )
+    )
+  )
+
+;def-ref
+;-------------------------------------------------------------------------------------------
+(define def-ref
+  (lambda (ref)
+    (cases target (primitive-deref ref)
+       (direct-target (exp-val) exp-val)
+       (indirect-target (ref1)
+                        (cases target (primitive-deref ref1)
+                          (direct-target (exp-val) exp-val)
+                          (indirect-target (ref2)
+                                           (eopl:error "solo se pueden de 1 referencia a otra")
+                                           )
+                          )
+                        )
+      )
+    )
+  )
+
+;primitive-deref
+;-------------------------------------------------------------------------------------------
+(define primitive-deref
+ (lambda (ref)
+   (cases referencia ref
+     (a-ref (pos vec)
+            (vector-ref vec pos)
+            )
+     )
+   )
+ )
+
+;set-ref!
+;-------------------------------------------------------------------------------------------
+(define set-ref!
+  (lambda (ref val)
+    (let
+        ((ref
+          (cases target (primitive-deref ref)
+            (direct-target (exp-val) ref)
+            (indirect-target (ref1) ref1)
+            )
+          )
+         )
+      (primitive-setref! ref (direct-target val))
+      )
+    )
+  )
+
+;primitive-setref!
+;-------------------------------------------------------------------------------------------
+(define primitive-setref!
+  (lambda (ref val)
+    (cases referencia ref
+      (a-ref (pos vec)
+             (vector-set! vec pos val)
+             )
+      )
+    )
+  )
+
+;apply-env
+;-------------------------------------------------------------------------------------------
+(define apply-env
+  (lambda (env var)
+    (def-ref (apply-env-ref env var))
+   )
+  )
+
+
+
+
+;ambiente inicial
+;-------------------------------------------------------------------------------------------
+(define init-env  
+  (extend-env (list '@x '@y '@z '@a)
+              (list->vector (list (direct-target 4)
+                                  (direct-target 2)
+                                  (direct-target 5)
+                                  (indirect-target (a-ref 0 (list->vector (list (direct-target 4)
+                                  (direct-target 2)
+                                  (direct-target 5)))))))
+              (empty-env))
+  )
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
 (define eval-expresion
-  (lambda (pgm)
+  (lambda (pgm env)
     (cases expresion pgm
       (num-exp (n) n)
       (numerohex-exp (lnum) lnum)
       (caracter-exp (caracter) (string->symbol caracter))
-      (cadena-exp (cad) cad)      
+      (cadena-exp (cad) cad)
+      (identificador-exp (id) (apply-env env id))
+      (refid-exp (id) (apply-env env id))
+      (var-exp (ids rands body)
+               (let
+                   ((rands-num (map (lambda (x) (direct-target (eval-expresion x env))) rands)))
+                 (eval-expresion body (extend-env ids (list->vector rands-num) env))                 
+                   ))
       (else pgm)
       )
     )
@@ -285,7 +446,7 @@
 (define eval-program
   (lambda (pgm)
     (cases BSAT pgm
-        (bsat-program (exp) (eval-expresion exp))
+        (bsat-program (exp) (eval-expresion exp init-env))
         )
     )
   )
@@ -337,7 +498,7 @@
 ;(scan&parse "sub1_16(2)");  prim-exp con sub1_16
 ;(scan&parse "lenght(\"cadena\")");  prim-exp con lenght
 ;(scan&parse "concat(\"cadena\",\"cadena\")");  prim-exp con concat
-;(scan&parse "vacio()");  prim-exp con vacio
+;(scan&parse "empty");  prim-exp con empty
 ;(scan&parse "create-list(5,[])");  prim-exp con crear-lista 
 ;(scan&parse "list?([@x,@y])");  prim-exp con lista?
 ;(scan&parse "head([@x,@y])");  prim-exp con cabeza
@@ -354,8 +515,9 @@
 
 ;(scan&parse "set-vec(3,vector[@x,@y],5)");  prim-exp con set-vec
 ;(scan&parse "set-reg(@x,{@x=8},9)");  prim-exp con set-reg
-;(scan&parse "proc(@x) @x");  proc-exp
-;(scan&parse "(@x 5)");  app-exp
+;(scan&parse "proc(@x) set @x->4");  proc-exp
+;(scan&parse "(@x 5)");  app-exp paso por valor
+;(scan&parse "(@x $@z)");  app-exp paso por referencia 
 ;(scan&parse "print(\"Hola\")"); print-exp
 ;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp
 
