@@ -51,7 +51,7 @@
 ;;                      <set-vec (pos vec val)>
 ;;                  ::= set-rec ( <expresion> , <registro> , <expresion>)
 ;;                      <set-rec (pos reg val)>
-;;                  ::= <prim-bin> (expresion {, expresion}*
+;;                  ::= <prim-bin> (expresion , expresion)
 ;;                      <primbin-exp (lexp)>
 ;;                  ::= <prim-un> (expresion)
 ;;                      <primun-exp (lexp)>
@@ -135,7 +135,7 @@
                 rec-exp)
     (expresion ("begin" expresion (arbno ";" expresion) "end") begin-exp)
     (expresion ("for" identificador "=" expresion to-o-downto expresion "do" expresion "done") for-exp)    
-    (expresion (prim-bin "(" expresion (arbno "," expresion) ")") primbin-exp)
+    (expresion (prim-bin "(" expresion "," expresion ")") primbin-exp)
     (expresion (prim-un "(" expresion ")") primun-exp)
     (expresion ("proc" "(" (separated-list identificador ",") ")" expresion) proc-exp)
     (expresion ("(" expresion (arbno expresion) ")") app-exp)
@@ -491,11 +491,11 @@
 ;(scan&parse "%(2,3)"); prim-exp con %
 ;(scan&parse "add1(2)");  prim-exp con add1  
 ;(scan&parse "sub1(2)");  prim-exp con sub1
-;(scan&parse "+_16(2)");  prim-exp con +_16
-;(scan&parse "-_16(2)");  prim-exp con -_16
-;(scan&parse "*_16(2)");  prim-exp con *_16
-;(scan&parse "add1_16(2)");  prim-exp con add1_16
-;(scan&parse "sub1_16(2)");  prim-exp con sub1_16
+;(scan&parse "+_16(x_16(4 5 3), x_16(1 1))");  prim-exp con +_16
+;(scan&parse "-_16(x_16(4 5 3), x_16(1 2))");  prim-exp con -_16
+;(scan&parse "*_16(x_16(4 5 3), x_16(1))");  prim-exp con *_16
+;(scan&parse "add1_16(x_16(4 5 3))");  prim-exp con add1_16
+;(scan&parse "sub1_16(x_16(4 5 3))");  prim-exp con sub1_16
 ;(scan&parse "lenght(\"cadena\")");  prim-exp con lenght
 ;(scan&parse "concat(\"cadena\",\"cadena\")");  prim-exp con concat
 ;(scan&parse "empty");  prim-exp con empty
