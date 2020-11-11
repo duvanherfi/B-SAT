@@ -230,7 +230,7 @@
   (a-ref (pos number?) (vec vector?))  
   )
 
-;target
+;Funcion para validar si es un target de referencia
 ;-------------------------------------------------------------------------------------------
 (define ref-to-direct-target?
   (lambda (val)
@@ -249,6 +249,8 @@
     )
   )
 
+;funcion que valida si puede ser un target directo
+;-------------------------------------------------------------------------------------------
 (define no-refid-exp?
   (lambda (exp)
     (cond
@@ -262,6 +264,8 @@
     )
   )
 
+;target
+;-------------------------------------------------------------------------------------------
 (define-datatype target target?
   (direct-target (expval no-refid-exp?))
   (indirect-target (ref ref-to-direct-target?))
@@ -435,6 +439,12 @@
                    ((rands-num (map (lambda (x) (direct-target (eval-expresion x env))) rands)))
                  (eval-expresion body (extend-env ids (list->vector rands-num) env))                 
                    ))
+      (asignar-exp (id exp)
+                   (begin
+                     (set-ref!
+                      (apply-env-ref env id)
+                      (eval-expresion exp env))
+                     'OK!))
       (else pgm)
       )
     )
