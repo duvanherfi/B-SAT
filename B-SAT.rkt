@@ -178,7 +178,7 @@
     (prim-un ("vector?") isvector-exp)
     
     ;------------primitivas binarias-------------
-    (prim-bin ("%") modulo)
+    (prim-bin ("%") moduloB)
     (prim-bin ("+") suma)
     (prim-bin ("-") resta)
     (prim-bin ("*") mult)
@@ -428,6 +428,49 @@
                                   (direct-target 5)))))))
               (empty-env))
   )
+
+;eval-binprim
+;-------------------------------------------------------------------------------------------
+;    (prim-bin ("append") append-exp)
+;    (prim-bin ("create-list") crear-lista-exp)
+;    (prim-bin ("create-vec") crear-v-exp)
+;    (prim-bin ("ref-vec") ref-vec-exp)   
+;    (prim-bin ("ref-reg") ref-reg-exp)
+(define suma-bignum
+  (lambda (x y)
+    (if (is-zero? x)
+        y
+        (successor (suma-bignum (predecessor x) y)))))
+
+(define resta-bignum
+  (lambda (x y)
+    (if (is-zero? y)
+        x
+        (predecessor (resta-bignum  x (predecessor y))))))
+
+(define mult-bignum
+  (lambda (x y)
+    (if (is-zero? x)
+        (zero)
+        (suma-bignum (mult-bignum (predecessor x) y) y))
+    ))
+
+(define eval-binprim
+  (lambda (op num1 num2)
+    (cases prim-bin op
+      (suma () (+ num1 num2))
+      (resta () (- num1 num2))
+      (moduloB () (modulo num1 num2))
+      (mult () (* num1 num2))
+      (division () (/ num1 num2))
+      (suma16 () (suma-bignum num1 num2))
+      (resta16 () (resta-bignum num1 num2))
+      (mult16 () (mult-bignum num1 num2))
+      (concat-exp () (string-append num1 num2))
+      (else #f)
+      )
+    )
+  )
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
 (define eval-expresion
@@ -455,6 +498,7 @@
                    ((rands-num (map (lambda (x) (cons-target (eval-expresion x env))) rands)))
                  (eval-expresion body (extend-env ids (list->vector rands-num) env))                 
                    ))
+      (primbin-exp (op exp1 exp2) (eval-binprim op (eval-expresion exp1 env) (eval-expresion exp2 env)))
       (else pgm)
       )
     )
