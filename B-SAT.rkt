@@ -239,6 +239,7 @@
           (a-ref (pos vec)
                  (cases target (vector-ref vec pos)
                    (direct-target (expval) #t)
+                   (cons-target (expval) #t)
                    (indirect-target (ref) (eopl:error "no puede pasar una referencia enre procedimientos")
                    )
                  )
@@ -269,6 +270,7 @@
 (define-datatype target target?
   (direct-target (expval no-refid-exp?))
   (indirect-target (ref ref-to-direct-target?))
+  (cons-target (expval no-refid-exp?))
   )
 
 
@@ -347,9 +349,11 @@
   (lambda (ref)
     (cases target (primitive-deref ref)
        (direct-target (exp-val) exp-val)
+       (cons-target (exp-val) exp-val)
        (indirect-target (ref1)
                         (cases target (primitive-deref ref1)
                           (direct-target (exp-val) exp-val)
+                          (cons-target (exp-val) exp-val)
                           (indirect-target (ref2)
                                            (eopl:error "solo se pueden de 1 referencia a otra")
                                            )
@@ -379,6 +383,7 @@
         ((ref
           (cases target (primitive-deref ref)
             (direct-target (exp-val) ref)
+            (cons-target (exp-val) (eopl:error "No se puede cambiar el valor de una constante"))
             (indirect-target (ref1) ref1)
             )
           )
@@ -445,6 +450,11 @@
                       (apply-env-ref env id)
                       (eval-expresion exp env))
                      'OK!))
+      (cons-exp (ids rands body)
+                (let
+                   ((rands-num (map (lambda (x) (cons-target (eval-expresion x env))) rands)))
+                 (eval-expresion body (extend-env ids (list->vector rands-num) env))                 
+                   ))
       (else pgm)
       )
     )
