@@ -224,6 +224,36 @@
               )  
   )
 
+(define recursively-extended-env-record
+  (lambda (proc-names lidss bodies old-env)
+    (let*
+        (
+         (len (length proc-names))
+         (vec (make-vector len))
+         (env (extend-env proc-names vec old-env))
+         )
+      (letrec
+          [
+           (actualizar-vector
+            (lambda (pos lidds lbodies)
+              (cond
+                [(null? lidds) env]
+                [else
+                 (begin
+                   (vector-set! vec pos (direct-target (closure (car lidds) (car lbodies) env)))
+                   (actualizar-vector (+ pos  1) (cdr lidds) (cdr lbodies))
+                   )
+                 ]
+                )
+              )
+            )
+           ]
+        (actualizar-vector 0 lidss bodies)
+       )
+        )
+      )
+  )
+
 ;referencia
 ;-------------------------------------------------------------------------------------------
 (define-datatype referencia referencia?  
@@ -316,6 +346,25 @@
       )
     )
   )
+
+(define suma-bignum
+  (lambda (x y)
+    (if (is-zero? x)
+        y
+        (successor (suma-bignum (predecessor x) y)))))
+
+(define resta-bignum
+  (lambda (x y)
+    (if (is-zero? y)
+        x
+        (predecessor (resta-bignum  x (predecessor y))))))
+
+(define mult-bignum
+  (lambda (x y)
+    (if (is-zero? x)
+        (zero)
+        (suma-bignum (mult-bignum (predecessor x) y) y))
+    ))
 
 ;apply-env-ref
 ;-------------------------------------------------------------------------------------------
@@ -436,24 +485,7 @@
 ;    (prim-bin ("create-vec") crear-v-exp)
 ;    (prim-bin ("ref-vec") ref-vec-exp)   
 ;    (prim-bin ("ref-reg") ref-reg-exp)
-(define suma-bignum
-  (lambda (x y)
-    (if (is-zero? x)
-        y
-        (successor (suma-bignum (predecessor x) y)))))
 
-(define resta-bignum
-  (lambda (x y)
-    (if (is-zero? y)
-        x
-        (predecessor (resta-bignum  x (predecessor y))))))
-
-(define mult-bignum
-  (lambda (x y)
-    (if (is-zero? x)
-        (zero)
-        (suma-bignum (mult-bignum (predecessor x) y) y))
-    ))
 
 (define eval-binprim
   (lambda (op num1 num2)
@@ -471,6 +503,50 @@
       )
     )
   )
+
+; clousure
+;-------------------------------------------------------------------------------------------
+(define-datatype procval procval?
+  (closure
+   (ids (list-of symbol?))
+   (body expresion?)
+   (env ambiente?)
+   )
+  )
+
+(define apply-procedure
+  (lambda (proc args)
+    (cases procval proc
+      (closure (ids body env)
+               (eval-expresion body (extend-env ids (list->vector args) env)))
+      )
+    )
+  )
+
+;eval-rand-pref
+;-------------------------------------------------------------------------------------------
+(define eval-rand-pref
+  (lambda (x amb)
+    (cases expresion x
+      (refid-exp (id) (indirect-target
+                     (let
+                         (
+                          (ref (apply-env-ref amb id))
+                          )
+                       (cases target (primitive-deref ref)
+                         (direct-target (expval) ref)
+                         (cons-target (expval) ref)
+                         (indirect-target (ref1) ref1)
+                         )
+                         )
+                     ))
+      (else
+       (direct-target (eval-expresion x amb))
+       )
+      )
+    )
+  )
+
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
 (define eval-expresion
@@ -481,10 +557,21 @@
       (caracter-exp (caracter) (string->symbol caracter))
       (cadena-exp (cad) cad)
       (identificador-exp (id) (apply-env env id))
-      (refid-exp (id) (apply-env env id))
+      (refid-exp (id) (indirect-target
+                     (let
+                         (
+                          (ref (apply-env-ref env id))
+                          )
+                       (cases target (primitive-deref ref)
+                         (direct-target (expval) ref)
+                         (cons-target (expval) ref)
+                         (indirect-target (ref1) ref1)
+                         )
+                         )
+                     ))
       (var-exp (ids rands body)
                (let
-                   ((rands-num (map (lambda (x) (direct-target (eval-expresion x env))) rands)))
+                   ((rands-num (map (lambda (x) (eval-rand-pref x env)) rands)))
                  (eval-expresion body (extend-env ids (list->vector rands-num) env))                 
                    ))
       (asignar-exp (id exp)
@@ -498,7 +585,28 @@
                    ((rands-num (map (lambda (x) (cons-target (eval-expresion x env))) rands)))
                  (eval-expresion body (extend-env ids (list->vector rands-num) env))                 
                    ))
-      (primbin-exp (op exp1 exp2) (eval-binprim op (eval-expresion exp1 env) (eval-expresion exp2 env)))
+      (primbin-exp (op exp1 exp2)
+                   (eval-binprim op
+                                 (eval-expresion exp1 env)
+                                 (eval-expresion exp2 env)))
+      (proc-exp (ids body)
+                (closure ids body env)
+                )
+      (app-exp (rator rands)
+               (let
+                   [
+                    (proc (eval-expresion rator env))
+                    (lrands (map (lambda (x) (eval-rand-pref x env))rands))
+                    ]
+                 
+               (if (procval? proc)
+                   (apply-procedure proc lrands)
+                   (eopl:error "%s no es un procedimiento" proc)
+                   )
+                 )
+               )
+      (rec-exp (proc-names idss bodies body)
+               (eval-expresion body (recursively-extended-env-record proc-names idss bodies env)))
       (else pgm)
       )
     )
