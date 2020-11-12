@@ -607,6 +607,7 @@
                )
       (rec-exp (proc-names idss bodies body)
                (eval-expresion body (recursively-extended-env-record proc-names idss bodies env)))
+      (print-exp (exp) (display (eval-expresion exp env)))
       (else pgm)
       )
     )
