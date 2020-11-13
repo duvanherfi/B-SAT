@@ -558,7 +558,7 @@
     )
   )
 
-;eval-lista
+;eval-vector
 ;-------------------------------------------------------------------------------------------
 (define eval-vector
   (lambda (l-exp env)
@@ -568,6 +568,33 @@
     )
   )
 
+;eval-registro
+;-------------------------------------------------------------------------------------------
+(define eval-registro
+  (lambda (l-exp env)
+    (cases registro l-exp      
+      (registro1 (id exp lids lexp)
+                 (if (null? lids)
+                     (list (list->vector (list id (eval-expresion exp env))))
+                     (letrec
+                     [(lreg (list (list->vector (list id (eval-expresion exp env)))))
+                      (armarRegistro (lambda (lids lexp)
+                                       (cond
+                                         [(null? lids) empty]
+                                         [else (append lreg (list                                                        
+                                                        (list->vector
+                                                               (list
+                                                                (car lids)
+                                                                (eval-expresion (car lexp) env))))
+                                                       (armarRegistro (cdr lids) (cdr lexp)))]
+                                         )
+                                       ))]
+                   (list->vector (armarRegistro lids lexp))
+                     )))
+      )
+    )
+  )
+;
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
 (define eval-expresion
@@ -668,7 +695,8 @@
                      )
                  )
       (lista-exp (lexps) (eval-lista lexps env))
-      (vector-exp (lexps) (eval-vector lexps env))
+      (vector-exp (vexps) (eval-vector vexps env))
+      (registro-exp (rexp) (eval-registro rexp env))
       (else pgm)
       )
     )
