@@ -547,6 +547,18 @@
     )
   )
 
+;eval-lista
+;-------------------------------------------------------------------------------------------
+
+(define eval-lista
+  (lambda (l-exp env)
+    (cases lista l-exp
+      (empty-list () empty)
+      (lista1 (lexps) (map (lambda (x) (eval-expresion x env)) lexps))
+      )
+    )
+  )
+
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
 (define eval-expresion
@@ -607,7 +619,7 @@
                )
       (rec-exp (proc-names idss bodies body)
                (eval-expresion body (recursively-extended-env-record proc-names idss bodies env)))
-      (print-exp (exp) (begin (display (eval-expresion exp env)) (display "\n")))
+      (print-exp (exp) (begin (display (eval-expresion exp env)) (display "\n") 'endPrint))
       (for-exp (id exp1 tod exp2 body)
                (letrec
                    [(i (eval-expresion exp1 env))
@@ -627,6 +639,26 @@
                  (for i)
                    )
                )
+      (begin-exp (exp lexps)
+                 (if (null? lexps)
+                     (eval-expresion exp env)
+                     (letrec
+                         [(recorrer (lambda (L)
+                                      (cond
+                                        [(null? (cdr L)) (eval-expresion (car L) env)]
+                                        [else (begin (eval-expresion (car L) env)
+                                        (recorrer (cdr L))
+                                        )]
+                                        )
+                                      ))
+                          ]
+                       (begin
+                         (eval-expresion exp env)
+                         (recorrer lexps))
+                         )
+                     )
+                 )
+      (lista-exp (lexps) (eval-lista lexps env))
       (else pgm)
       )
     )
