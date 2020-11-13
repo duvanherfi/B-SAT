@@ -549,12 +549,21 @@
 
 ;eval-lista
 ;-------------------------------------------------------------------------------------------
-
 (define eval-lista
   (lambda (l-exp env)
     (cases lista l-exp
       (empty-list () empty)
       (lista1 (lexps) (map (lambda (x) (eval-expresion x env)) lexps))
+      )
+    )
+  )
+
+;eval-lista
+;-------------------------------------------------------------------------------------------
+(define eval-vector
+  (lambda (l-exp env)
+    (cases vectorB l-exp      
+      (vector1 (lexps) (list->vector (map (lambda (x) (eval-expresion x env)) lexps)))
       )
     )
   )
@@ -659,6 +668,7 @@
                      )
                  )
       (lista-exp (lexps) (eval-lista lexps env))
+      (vector-exp (lexps) (eval-vector lexps env))
       (else pgm)
       )
     )
