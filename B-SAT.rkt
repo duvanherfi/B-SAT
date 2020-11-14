@@ -33,8 +33,12 @@
 ;;                      <lista-exp (lista)>
 ;;                  ::= <vectorB>
 ;;                      <vector-exp (vector)>
+;;                  ::= vector?(<expresion>)
+;;                      <isvector-exp exp>
 ;;                  ::= <registro>
 ;;                      <registro-exp (registro)>
+;;                  ::= register?(<expresion>)
+;;                      <registros?-exp (exp)>
 ;;                  ::= <exp-bool>
 ;;                      <bool-exp (exp-bool)>
 ;;                  ::= begin {<expresion>}+(;) end
@@ -75,8 +79,6 @@
 ;;<prim-un>         ::= solveFNC | lenght 
 ;;                  ::= add1 | sub1 | add1_16 | sub1_16
 ;;                  ::= list? | head | tail
-;;                  ::= vector?
-;;                  ::= register?
 ;;------------------------------------------------------------------
 ;;<lista>           ::= empty
 ;;                      <empty-list>
@@ -153,6 +155,8 @@
     (expresion (vectorB) vector-exp)
     (expresion (registro) registro-exp)
     (expresion (expr-bool) bool-exp)
+    (expresion ("register?" "(" expresion ")") registros?-exp)
+    (expresion ("vector?" "(" expresion ")") isvector-exp)
     (lista ("empty") empty-list)
     (lista ("[" (separated-list expresion ",") "]") lista1)
     (vectorB ("vector" "[" (separated-list expresion ",") "]") vector1)
@@ -176,9 +180,7 @@
     (prim-un ("lenght") lenght-exp)   
     (prim-un ("list?") lista?-exp)
     (prim-un ("head") cabeza-exp)
-    (prim-un ("tail") cola-exp) 
-    (prim-un ("register?") registros?-exp)
-    (prim-un ("vector?") isvector-exp)
+    (prim-un ("tail") cola-exp)    
     
     ;------------primitivas binarias-------------
     (prim-bin ("%") moduloB)
@@ -502,6 +504,36 @@
     )
   )
 
+;eval-binprim
+;-------------------------------------------------------------------------------------------
+(define eval-unprim
+  (lambda (op op1)
+    (cases prim-un op
+      (solve-fnc () 0)
+      (add1 () (+ op1 1))
+      (sub1 () (- op1 1))
+      (add1_16 () (suma-bignum op1 '(1)))
+      (sub1_16 () (resta-bignum op1 '(1)))
+      (lenght-exp () (length op1))
+      (lista?-exp () (list? op1))
+      (cabeza-exp () (car op1))
+      (cola-exp ()
+                (letrec
+                    [(recorrer
+                      (lambda (lst)
+                        (cond
+                          [(null? (cdr lst)) (car lst)]
+                          [else (recorrer (cdr lst))]
+                          )
+                        )
+                      )]
+                  (recorrer op1)
+                    )
+                )      
+      )
+    )
+  )
+
 ; clousure
 ;-------------------------------------------------------------------------------------------
 (define-datatype procval procval?
@@ -588,6 +620,38 @@
                                        ))]
                    (list->vector (armarRegistro lids lexp))
                      )))
+      )
+    )
+  )
+
+;eval-register?
+;-------------------------------------------------------------------------------------------
+(define eval-register?
+  (lambda (exp)
+    (cases expresion exp
+      (registro-exp (reg)
+                    (cases registro reg      
+                      (registro1 (lids lexp) #t)
+                      (else #f)
+                      )
+                    )
+      (else #f)
+      )
+    )
+  )
+
+;eval-vector?
+;-------------------------------------------------------------------------------------------
+(define eval-vector?
+  (lambda (exp)
+    (cases expresion exp
+      (vector-exp (vec)
+                    (cases vectorB vec      
+                      (vector1 (lexp) #t)
+                      (else #f)
+                      )
+                    )
+      (else #f)
       )
     )
   )
@@ -716,6 +780,9 @@
       (vector-exp (vexps) (eval-vector vexps env))
       (registro-exp (rexp) (eval-registro rexp env))
       (ref-reg-exp (id reg) (eval-ref-reg id reg env))
+      (registros?-exp (exp) (eval-register? exp))
+      (isvector-exp (exp) (eval-vector? exp))
+      (primun-exp (op exp) (eval-unprim op (eval-expresion exp env)))
       (else pgm)
       )
     )
