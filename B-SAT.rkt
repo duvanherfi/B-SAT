@@ -51,6 +51,8 @@
 ;;                      <set-vec (pos vec val)>
 ;;                  ::= set-rec ( <expresion> , <registro> , <expresion>)
 ;;                      <set-rec (pos reg val)>
+;;                  ::= ref-reg(<identificador>,<registro>)
+;;                      <ref-reg-exp (id, reg)>
 ;;                  ::= <prim-bin> (expresion , expresion)
 ;;                      <primbin-exp (lexp)>
 ;;                  ::= <prim-un> (expresion)
@@ -68,7 +70,7 @@
 ;;-----------------------primitivas binarias------------------------
 ;;<prim-bin>        ::= + | - | * | % | / | +_16 | -_16 | *_16
 ;;                  ::= create-list | append | create-vec | create-reg
-;;                  ::= ref-vec |  | ref-reg | set-reg | concat
+;;                  ::= ref-vec | set-reg | concat
 ;;-----------------------privimitivas unarias-----------------------
 ;;<prim-un>         ::= solveFNC | lenght 
 ;;                  ::= add1 | sub1 | add1_16 | sub1_16
@@ -145,6 +147,7 @@
     (expresion ("while" expr-bool "do" expresion "done") while-exp)
     (expresion ("set-vec" "(" expresion "," vectorB "," expresion ")") set-vec-exp)
     (expresion ("set-reg" "(" expresion "," registro "," expresion ")") set-reg-exp)
+    (expresion ("ref-reg" "(" identificador "," registro ")") ref-reg-exp)
     (expresion ("create-reg" "(" identificador "=" expresion "," registro")") crear-reg-exp)
     (expresion (lista) lista-exp)
     (expresion (vectorB) vector-exp)
@@ -153,7 +156,7 @@
     (lista ("empty") empty-list)
     (lista ("[" (separated-list expresion ",") "]") lista1)
     (vectorB ("vector" "[" (separated-list expresion ",") "]") vector1)
-    (registro ("{" identificador "=" expresion (arbno ";" identificador "=" expresion)"}") registro1)
+    (registro ("{"(separated-list identificador "=" expresion ";")"}") registro1)
     (expr-bool (pred-prim "(" expresion "," expresion ")") comparacion)
     (expr-bool (oper-bin-bool "(" expr-bool "," expr-bool ")") conjuncion)
     (expr-bool (bool) vlr-bool)
@@ -191,7 +194,6 @@
     (prim-bin ("create-list") crear-lista-exp)
     (prim-bin ("create-vec") crear-v-exp)
     (prim-bin ("ref-vec") ref-vec-exp)   
-    (prim-bin ("ref-reg") ref-reg-exp)
         
     (pred-prim ("<") menor-exp)
     (pred-prim (">") mayor-exp)
@@ -480,26 +482,22 @@
 
 ;eval-binprim
 ;-------------------------------------------------------------------------------------------
-;    (prim-bin ("append") append-exp)
-;    (prim-bin ("create-list") crear-lista-exp)
-;    (prim-bin ("create-vec") crear-v-exp)
-;    (prim-bin ("ref-vec") ref-vec-exp)   
-;    (prim-bin ("ref-reg") ref-reg-exp)
-
-
 (define eval-binprim
-  (lambda (op num1 num2)
+  (lambda (op op1 op2)
     (cases prim-bin op
-      (suma () (+ num1 num2))
-      (resta () (- num1 num2))
-      (moduloB () (modulo num1 num2))
-      (mult () (* num1 num2))
-      (division () (/ num1 num2))
-      (suma16 () (suma-bignum num1 num2))
-      (resta16 () (resta-bignum num1 num2))
-      (mult16 () (mult-bignum num1 num2))
-      (concat-exp () (string-append num1 num2))
-      (else #f)
+      (suma () (+ op1 op2))
+      (resta () (- op1 op2))
+      (moduloB () (modulo op1 op2))
+      (mult () (* op1 op2))
+      (division () (/ op1 op2))
+      (suma16 () (suma-bignum op1 op2))
+      (resta16 () (resta-bignum op1 op2))
+      (mult16 () (mult-bignum op1 op2))
+      (concat-exp () (string-append op1 op2))
+      (append-exp () (append op1 op2))
+      (crear-lista-exp () (append op2 (list op1)))
+      (crear-v-exp () (list->vector (append (vector->list op2) (list op1))))
+      (ref-vec-exp () (vector-ref op2 op1))     
       )
     )
   )
@@ -573,15 +571,14 @@
 (define eval-registro
   (lambda (l-exp env)
     (cases registro l-exp      
-      (registro1 (id exp lids lexp)
+      (registro1 (lids lexp)
                  (if (null? lids)
-                     (list (list->vector (list id (eval-expresion exp env))))
+                     #()
                      (letrec
-                     [(lreg (list (list->vector (list id (eval-expresion exp env)))))
-                      (armarRegistro (lambda (lids lexp)
+                     [(armarRegistro (lambda (lids lexp)
                                        (cond
                                          [(null? lids) empty]
-                                         [else (append lreg (list                                                        
+                                         [else (append (list                                                        
                                                         (list->vector
                                                                (list
                                                                 (car lids)
@@ -594,7 +591,28 @@
       )
     )
   )
-;
+
+;eval-ref-reg
+;-------------------------------------------------------------------------------------------
+(define eval-ref-reg
+  (lambda (id reg env)
+    (letrec
+        [(op1 id)
+         (op2 (eval-registro reg env))
+         (buscar-id (lambda (id ac)
+                      (cond
+                        [(eqv? (vector-length op2) 0) (eopl:error "El registro está vacío" id)]
+                        [(eqv? ac (vector-length op2)) (eopl:error "No se encontró la clave" id)]
+                        [(eqv? id (vector-ref (vector-ref op2 ac) 0))
+                         (vector-ref (vector-ref op2 ac) 1)]
+                        [else (buscar-id id (+ ac 1))]
+                        )
+                      ))]
+      (buscar-id op1 0)
+      )
+    )
+  )
+
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
 (define eval-expresion
@@ -697,6 +715,7 @@
       (lista-exp (lexps) (eval-lista lexps env))
       (vector-exp (vexps) (eval-vector vexps env))
       (registro-exp (rexp) (eval-registro rexp env))
+      (ref-reg-exp (id reg) (eval-ref-reg id reg env))
       (else pgm)
       )
     )
@@ -708,7 +727,8 @@
 (define eval-program
   (lambda (pgm)
     (cases BSAT pgm
-        (bsat-program (exp) (eval-expresion exp init-env))
+      (bsat-program (exp) (eval-expresion exp init-env))
+      (else (eopl:error "No es un programa BSAT valido"))
         )
     )
   )
