@@ -677,6 +677,86 @@
     )
   )
 
+
+
+
+;eval-bool-exp
+;-------------------------------------------------------------------------------------------
+(define eval-bool-exp
+  (lambda (exp-bool env)
+    (cases expr-bool exp-bool
+                  (comparacion (pre-prim exp1 exp2)
+                               (eval-pred-prim pre-prim
+                                               (eval-expresion exp1 env)
+                                               (eval-expresion exp2 env))
+                               )
+                  (conjuncion (op-bin-bool exp-bool1 exp-bool2)
+                              (eval-oper-bin-bool op-bin-bool
+                                                  (eval-bool-exp exp-bool1 env)
+                                                  (eval-bool-exp exp-bool2 env))
+                              )
+                  (vlr-bool (valor)
+                            (cases bool valor
+                              (true-exp () #t)
+                              (false-exp () #f)
+                              )
+                            )
+                  (op-comp (op-un-bool exp-bool1)
+                              (eval-oper-un-bool op-un-bool (eval-bool-exp exp-bool1 env))
+                              )
+                  )
+    )
+  )
+
+;eval-pred-prim
+;-------------------------------------------------------------------------------------------
+(define eval-pred-prim
+  (lambda (op op1 op2)
+    (cases pred-prim op
+      (menor-exp () (< op1 op2))
+      (mayor-exp () (> op1 op2))
+      (menor=exp () (<= op1 op2))
+      (mayor=exp () (>= op1 op2))
+      (igual=exp () (eqv? op1 op2))
+      (diferente-exp () (not (eqv? op1 op2)))
+      )
+    )
+  )
+
+;eval-oper-bin-bool
+;-------------------------------------------------------------------------------------------
+(define eval-oper-bin-bool
+  (lambda (op op1 op2)
+    (cases oper-bin-bool op
+      (and-exp () (and op1 op2))
+      (or-exp () (or op1 op2))
+      )
+    )
+  )
+
+;eval-oper-un-bool
+;-------------------------------------------------------------------------------------------
+(define eval-oper-un-bool
+  (lambda (op op1)
+    (cases oper-un-bool op
+      (not-exp () (not op1))
+      )
+    )
+  )
+
+(define iteracion
+  (lambda (exp-bool exp env)
+    (if (eval-bool-exp exp-bool env)
+                        (begin
+                          (eval-expresion exp env)
+                          (iteracion exp-bool exp env)
+                          )
+                        'EndWhile
+                        )
+    )
+  )
+
+
 ;eval-expresion
 ;-------------------------------------------------------------------------------------------
 (define eval-expresion
@@ -711,8 +791,9 @@
                       (eval-expresion exp env))
                      'OK!))
       (cons-exp (ids rands body)
-                (let
-                   ((rands-num (map (lambda (x) (cons-target (eval-expresion x env))) rands)))
+                (let (
+                      (rands-num (map (lambda (x) (cons-target (eval-expresion x env))) rands))
+                      )
                  (eval-expresion body (extend-env ids (list->vector rands-num) env))                 
                    ))
       (primbin-exp (op exp1 exp2)
@@ -765,7 +846,7 @@
                                       (cond
                                         [(null? (cdr L)) (eval-expresion (car L) env)]
                                         [else (begin (eval-expresion (car L) env)
-                                        (recorrer (cdr L))
+                                                     (recorrer (cdr L))
                                         )]
                                         )
                                       ))
@@ -783,6 +864,22 @@
       (registros?-exp (exp) (eval-register? exp))
       (isvector-exp (exp) (eval-vector? exp))
       (primun-exp (op exp) (eval-unprim op (eval-expresion exp env)))
+
+      (if-exp (exp-bool true-exp false-exp)
+              (if (eval-bool-exp exp-bool env)
+                  (eval-expresion true-exp env)
+                  (eval-expresion false-exp env)
+                  )
+              )  
+      
+      (while-exp (exp-bool exp)
+                 (iteracion exp-bool exp env)
+                 )
+      
+      (bool-exp (exp-bool)
+                (eval-bool-exp exp-bool env)
+                )
+      
       (else pgm)
       )
     )
