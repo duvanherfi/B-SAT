@@ -77,6 +77,7 @@
 ;;                  ::= send <expresion> <identificador> ({<expresion>}*(,))
 ;;                  ::= <method-app-exp(obj-exp method-name rands)>
 ;;                  ::= super <identificador> ({<expresion>}*(,))
+;;                      <super-call-exp(method-name rands)>
 ;;<clausula-or>     ::= (<numero>)+("or")
 ;;                      <clausula-or-exp (n lsn)>
 ;;-----------------------primitivas binarias------------------------
