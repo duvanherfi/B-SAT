@@ -133,13 +133,14 @@
 
 (define gramatica
   '(    
-    (BSAT (expresion) bsat-program)    
+    (BSAT (expresion) bsat-program)
+    (method-decl ("def" identificador "(" (separated-list identificador ",") ")" expresion) a-method-decl)    
     (expresion (numero) num-exp)
     (expresion ("x_16(" (arbno numero) ")") numerohex-exp)
     (expresion ("'" letras "'") caracter-exp)
     (expresion ("\"" letras "\"") cadena-exp)
     (expresion (identificador) identificador-exp)
-    (expresion ("$" identificador) refid-exp)
+    (expresion ("$" identificador) refid-exp)  
     (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
     (expresion ("set" identificador "->" expresion) asignar-exp)
     (expresion ("cons" (separated-list identificador "=" expresion ",") "in" expresion)  cons-exp)
@@ -165,6 +166,7 @@
     (expresion (expr-bool) bool-exp)
     (expresion ("register?" "(" expresion ")") registros?-exp)
     (expresion ("vector?" "(" expresion ")") isvector-exp)
+    (expresion ("super" identificador "(" ( separated-list expresion ",") ")" ) super-call-exp)
     (lista ("empty") empty-list)
     (lista ("[" (separated-list expresion ",") "]") lista1)
     (vectorB ("vector" "[" (separated-list expresion ",") "]") vector1)
