@@ -133,7 +133,8 @@
 
 (define gramatica
   '(    
-    (BSAT (expresion) bsat-program)    
+    (BSAT ((arbno class-decl)expresion) bsat-program)
+    (class-decl ("class" identificador "extends" identificador) a-class-decl)
     (expresion (numero) num-exp)
     (expresion ("x_16(" (arbno numero) ")") numerohex-exp)
     (expresion ("'" letras "'") caracter-exp)
@@ -159,6 +160,8 @@
     (expresion ("set-reg" "(" expresion "," expresion "," expresion ")") set-reg-exp)
     (expresion ("ref-reg" "(" identificador "," registro ")") ref-reg-exp)
     (expresion ("create-reg" "(" identificador "=" expresion "," expresion")") crear-reg-exp)
+    (expresion ("new" identificador "(" (separated-list expresion ",") ")") new-object-exp)
+    (expresion ("send" expresion identificador "(" (separated-list expresion ",") ")") method-app-exp)
     (expresion (lista) lista-exp)
     (expresion (vectorB) vector-exp)
     (expresion (registro) registro-exp)
