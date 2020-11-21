@@ -5,10 +5,13 @@
 
 ;;*********************************Gramatitca**************************************
 
-;;<BSAT>      ::= <expresion>
-
-;;                <bsat-program (exp)>
-
+;;<BSAT>            ::= {<class-decl>}* <expresion>
+;;                      <bsat-program (class exp)>
+;;<class-decl>      ::= class <identificador> extends <identificador>
+;;                      {field <identificador>}* {<method-decl>}*
+;;                      <a-class-decl(name super fields-id methods)>
+;;<method-decl>     ::= def <identificador> ({<identificador>}(,)) <expresion>
+;;                      <a-method-decl (name ids body)>
 ;;<expresion>       ::= <numero>
 ;;                      <num-exp (datum)>
 ;;                  ::= x16( {<numero>}* )
@@ -69,6 +72,11 @@
 ;;                      <print-exp>
 ;;                  ::= FNC <numero> (<clausula-or>)+("and")
 ;;                      <fnc-exp (numero cla-or lcla-or)>
+;;                  ::= new <identificador> ({expresion}*(,))
+;;                      <new-object-exp(class-name rands)>
+;;                  ::= send <expresion> <identificador> ({<expresion>}*(,))
+;;                  ::= <method-app-exp(obj-exp method-name rands)>
+;;                  ::= super <identificador> ({<expresion>}*(,))
 ;;<clausula-or>     ::= (<numero>)+("or")
 ;;                      <clausula-or-exp (n lsn)>
 ;;-----------------------primitivas binarias------------------------
