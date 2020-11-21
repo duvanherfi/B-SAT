@@ -49,12 +49,12 @@
 ;;                      <while-exp (expb exp)>
 ;;                  ::= for <identificador> = <expresion> <to-odownto> <expresion> do <expresion> done
 ;;                      <for-exp (id exp1 to-odwto exp2 exp3)>
-;;                  ::= create-reg(<identificador> = <expresion> , <registro>)
+;;                  ::= create-reg(<identificador> = <expresion> , <expresion>)
 ;;                      <create-reg (id exp reg)>
-;;                  ::= set-vec ( <expresion> , <vectorB> , <expresion>)
+;;                  ::= set-vec ( <expresion> , <expresion> , <expresion>)
 ;;                      <set-vec (pos vec val)>
-;;                  ::= set-rec ( <expresion> , <registro> , <expresion>)
-;;                      <set-rec (pos reg val)>
+;;                  ::= set-reg ( <expresion> , <expresion> , <expresion>)
+;;                      <set-reg (pos reg val)>
 ;;                  ::= ref-reg(<identificador>,<registro>)
 ;;                      <ref-reg-exp (id, reg)>
 ;;                  ::= <prim-bin> (expresion , expresion)
@@ -147,10 +147,10 @@
     (expresion ("FNC" numero "(" clausula-or (arbno "and" clausula-or) ")") fnc-exp)
     (expresion ("if" expr-bool "then" expresion "else" expresion "end") if-exp)
     (expresion ("while" expr-bool "do" expresion "done") while-exp)
-    (expresion ("set-vec" "(" expresion "," vectorB "," expresion ")") set-vec-exp)
-    (expresion ("set-reg" "(" expresion "," registro "," expresion ")") set-reg-exp)
+    (expresion ("set-vec" "(" expresion "," expresion "," expresion ")") set-vec-exp)
+    (expresion ("set-reg" "(" expresion "," expresion "," expresion ")") set-reg-exp)
     (expresion ("ref-reg" "(" identificador "," registro ")") ref-reg-exp)
-    (expresion ("create-reg" "(" identificador "=" expresion "," registro")") crear-reg-exp)
+    (expresion ("create-reg" "(" identificador "=" expresion "," expresion")") crear-reg-exp)
     (expresion (lista) lista-exp)
     (expresion (vectorB) vector-exp)
     (expresion (registro) registro-exp)
@@ -465,10 +465,7 @@
     (def-ref (apply-env-ref env var))
    )
   )
-
-
-
-
+                                          
 ;ambiente inicial
 ;-------------------------------------------------------------------------------------------
 (define init-env  
@@ -677,8 +674,27 @@
     )
   )
 
-
-
+;eval-set-reg
+;-------------------------------------------------------------------------------------------
+(define eval-set-reg
+  (lambda (id reg val)
+    (letrec
+        [
+         (buscar-id (lambda (key ac)
+                      (cond
+                        [(eqv? (vector-length reg) 0) (eopl:error "El registro está vacío" key)]
+                        [(eqv? ac (vector-length reg)) (eopl:error "No se encontró la clave" key)]
+                        [(eqv? key (vector-ref (vector-ref reg ac) 0))
+                         (begin
+                           (vector-set! (vector-ref reg ac) 1 val)
+                           'OK!)]
+                        [else (buscar-id key (+ ac 1))]
+                        )
+                      ))]
+      (buscar-id id 0)
+      )
+    )
+  )
 
 ;eval-bool-exp
 ;-------------------------------------------------------------------------------------------
@@ -879,8 +895,37 @@
       (bool-exp (exp-bool)
                 (eval-bool-exp exp-bool env)
                 )
+
+      (set-vec-exp (exp1 exp2 exp3)
+                   (begin
+                     (vector-set! (eval-expresion exp2 env) (eval-expresion exp1 env) (eval-expresion exp3 env))
+                     'OK!
+                     )
+                   )
+
+      (crear-reg-exp (id exp1 rexp)
+                     (list->vector
+                      (append
+                       (vector->list (eval-expresion rexp env))
+                       (list (list->vector (list id (eval-expresion exp1 env))))
+                       )
+                      )
+                     )
       
-      (else pgm)
+      (set-reg-exp (exp1 exp2 exp3)
+                   (let
+                       (
+                        (id
+                         (cases expresion exp1
+                           (identificador-exp (s) s)
+                           (else (eopl:error "no es un identificador"))
+                           )
+                         )
+                        )
+                     (eval-set-reg id (eval-expresion exp2 env) (eval-expresion exp3 env))
+                     )
+                   )      
+      (else (eopl:error "No es una espresión válida"))
       )
     )
   )
@@ -959,7 +1004,7 @@
 
 ;---------------------------------------------------------------------------------
 
-;(scan&parse "set-vec(3,vector[@x,@y],5)");  prim-exp con set-vec
+;(scan&parse "set-vec(1,vector[@x,@y],5)");  prim-exp con set-vec
 ;(scan&parse "set-reg(@x,{@x=8},9)");  prim-exp con set-reg
 ;(scan&parse "proc(@x) set @x->4");  proc-exp
 ;(scan&parse "(@x 5)");  app-exp paso por valor
