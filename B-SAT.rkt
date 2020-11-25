@@ -26,7 +26,7 @@
 ;;                      <refid-exp (id)>                  
 ;;                  ::= var {<identificador> = <expresion>}*(,) in <expresion>
 ;;                      <var-exp (ids exps cuerpo)>
-;;                  ::= set <identificador> -> <expresion>
+;;                  ::= set <identificador> = <expresion>
 ;;                      <set-exp (id exp)>
 ;;                  ::= cons {<identificador> = <expresion>}*(,)
 ;;                      <cons-exp (ids exps cuerpo)> in <expresion>
@@ -109,7 +109,7 @@
 ;;                      <to>
 ;;                  ::= downto
 ;;                      <downto>
-;;<pred-prim>       ::= <|>|<=|>=|==|<>
+;;<pred-prim>       ::= <|>|<=|>=|==|!=
 ;;<oper-bin-bool>   ::= and|or
 ;;<oper-un-bool>    ::= not
 ;;<bool>            ::= true | false
