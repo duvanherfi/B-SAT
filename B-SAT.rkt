@@ -146,7 +146,7 @@
     (expresion (identificador) identificador-exp)
     (expresion ("$" identificador) refid-exp)  
     (expresion ("var" (separated-list identificador "=" expresion ",") "in" expresion)  var-exp)
-    (expresion ("set" identificador "->" expresion) asignar-exp)
+    (expresion ("set" identificador "=" expresion) asignar-exp)
     (expresion ("cons" (separated-list identificador "=" expresion ",") "in" expresion)  cons-exp)
     (expresion ("rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expresion)  "in" expresion) 
                 rec-exp)
@@ -218,7 +218,7 @@
     (pred-prim ("<=") menor=exp)
     (pred-prim (">=") mayor=exp)
     (pred-prim ("==") igual=exp)
-    (pred-prim ("<>") diferente-exp)
+    (pred-prim ("!=") diferente-exp)
     (oper-bin-bool ("and") and-exp)
     (oper-bin-bool ("or") or-exp)
     (oper-un-bool ("not") not-exp)
@@ -518,12 +518,161 @@
     )
   )
 
+;eval-clausulaor
+;-------------------------------------------------------------------------------------------
+(define eval-clausulaor
+  (lambda (cla)
+    (cases clausula-or cla
+      (clausula-or-exp (n lnum)
+                       (append (list n) lnum)
+                       )
+      )
+    )
+  )
+;eval-fnc
+;-------------------------------------------------------------------------------------------
+(define eval-fnc
+  (lambda (n claor lclaor)
+    (list n (append (list (eval-clausulaor claor)) (map eval-clausulaor lclaor)))
+    ))
+
+;nextcom
+;-------------------------------------------------------------------------------------------
+(define nextcom
+  (lambda (n)
+    (if (is-zero? n)
+	'(1)
+	(let ((t (+ (car n) 1)))
+	  (if (= t 2)
+	      (cons 0 (nextcom (cdr n)))
+	      (cons t (cdr n))
+              )
+          )
+        )
+    )
+  )
+;convert-num->bool
+;-------------------------------------------------------------------------------------------
+(define convert-num->bool
+  (lambda (x)
+    (if (zero? x)
+        #f
+        #t
+        )
+    )
+  )
+
+;convert-list->vector
+;-------------------------------------------------------------------------------------------
+(define convert-list->vector
+  (lambda (lst)
+    (cond
+      [(null? lst) empty]
+      [else
+       (cons (list->vector (map convert-num->bool (car lst))) (convert-list->vector (cdr lst)))]
+      )
+    )
+  )
+
+;combinaciones
+;-------------------------------------------------------------------------------------------
+(define combinaciones
+  (lambda (n)
+    (letrec
+        [
+         (limit (expt 2 n))
+         (lista (vector->list (make-vector n 0)))         
+         (generar (lambda (limit lista)
+                    (cond
+                      ((eqv? 0 limit) empty)
+                      (else
+                       (cons lista (generar (- limit 1) (nextcom lista))))
+                      )
+                    )
+                  )
+         ]
+      (convert-list->vector (generar limit lista))
+        )
+    ))
+
+;valorbool
+;-------------------------------------------------------------------------------------------
+(define valorbool
+  (lambda (vec n)
+    (if (< n 0)
+        (not (vector-ref vec (- (abs n) 1)))
+        (vector-ref vec (- n 1))
+        )
+    )
+  )
+
+;reemplazar
+;-------------------------------------------------------------------------------------------
+(define reemplazar
+  (lambda (vec lst)
+    (cond
+      [(null? lst) empty]
+      [(number? lst) (valorbool vec lst)]
+      [(boolean? lst) lst]      
+      [((list-of list?) lst)
+       (cons (reemplazar vec (car lst))
+             (reemplazar vec (cdr lst)))]
+      [(list? lst) (cons (reemplazar vec (car lst)) (reemplazar vec (cdr lst)))]
+      [else (list
+              (reemplazar vec (car lst))
+              (reemplazar vec (cdr lst)))]
+      )
+    )
+  )
+;evaluar-or
+;-------------------------------------------------------------------------------------------
+(define evaluar-or
+  (lambda (lst)
+    (cond
+      [(null? (cdr lst)) (car lst)]
+      [else (or (car lst) (evaluar-or (cdr lst)))]
+      )    
+    )
+  )
+
+;evaluar-and
+;-------------------------------------------------------------------------------------------
+(define evaluar-and
+  (lambda (lst)
+    (cond
+      [(null? (cdr lst)) (evaluar-or (car lst))]
+      [else (and (evaluar-or (car lst)) (evaluar-and (cdr lst)))]
+      )
+    )
+  )
+
+;eval-solve-fnc
+;-------------------------------------------------------------------------------------------
+(define eval-solve-fnc
+  (lambda (lst)    
+    (letrec
+        [
+         (comb (combinaciones (car lst)))
+         (evaluar (lambda (com lst)
+                          (cond
+                            [(null? com) (list 'insactisfactible com)]
+                            [else (if (evaluar-and (reemplazar (car com) lst))
+                                      (list 'satisfactible (vector->list (car com)))
+                                      (evaluar (cdr com) lst)
+                                      )]                            
+                            )
+                          ))
+         ]
+      (evaluar comb (cadr lst))
+        )
+    ))
+
 ;eval-binprim
 ;-------------------------------------------------------------------------------------------
 (define eval-unprim
   (lambda (op op1)
     (cases prim-un op
-      (solve-fnc () 0)
+      (solve-fnc () (eval-solve-fnc op1))
       (add1 () (+ op1 1))
       (sub1 () (- op1 1))
       (add1_16 () (suma-bignum op1 '(1)))
@@ -1109,6 +1258,11 @@
       (rec-exp (proc-names idss bodies body)
                (eval-expresion body (recursively-extended-env-record proc-names idss bodies env)))
       (print-exp (exp) (begin (display (eval-expresion exp env)) (display "\n") 'endPrint))
+      
+      (fnc-exp (n claor lclaor)
+               (eval-fnc n claor lclaor)
+               )
+      
       (for-exp (id exp1 tod exp2 body)
                (letrec
                    [(i (eval-expresion exp1 env))
@@ -1217,7 +1371,7 @@
                          method-name (apply-env-ref env '%super) obj args)
                         )
                       )
-      (else (eopl:error "No es una espresión válida"))
+      (else (eopl:error "No es una expresión válida"))
       )
     )
   )
@@ -1304,7 +1458,7 @@
 ;(scan&parse "(@x 5)");  app-exp paso por valor
 ;(scan&parse "(@x $@z)");  app-exp paso por referencia 
 ;(scan&parse "print(\"Hola\")"); print-exp
-;(scan&parse "FNC 2 ((5 or 6) and (3 or 6))");  fnc-exp
+;(scan&parse "FNC 2 ((1 or 2) and (2 or 1))");  fnc-exp
 
 ;-----------------------------------if-exp----------------------------------------
 ;(scan&parse "if <(2,3) then 2 else 3 end");  if-exp con pred-prim
